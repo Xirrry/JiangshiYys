@@ -65,7 +65,7 @@ def main():
     source=(ROOT/'用户使用手册.md').read_text(encoding='utf-8');content=render(source)
     (ROOT/'frontend/src/user_manual.html').write_text(content,encoding='utf-8')
     (ROOT/'frontend/src/manual.css').write_text(CSS,encoding='utf-8')
-    page='<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>僵尸痒痒鼠 v9.50 用户使用手册</title><style>body{margin:0;padding:32px 24px;background:#f6f2ea;font-family:"Microsoft YaHei UI","Microsoft YaHei",sans-serif}main{max-width:1000px;margin:auto;background:#fffaf2;padding:28px 36px;border:1px solid #e6dbca;border-radius:10px}@media print{body,main{padding:0;background:white;border:0}}'+CSS+'</style></head><body><main class="manual-content">'+content+'</main></body></html>'
+    page='<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>僵尸痒痒鼠 v9.51 用户使用手册</title><style>body{margin:0;padding:32px 24px;background:#f6f2ea;font-family:"Microsoft YaHei UI","Microsoft YaHei",sans-serif}main{max-width:1000px;margin:auto;background:#fffaf2;padding:28px 36px;border:1px solid #e6dbca;border-radius:10px}@media print{body,main{padding:0;background:white;border:0}}'+CSS+'</style></head><body><main class="manual-content">'+content+'</main></body></html>'
     (ROOT/'用户使用手册.html').write_text(page,encoding='utf-8')
     assert content.count('<h2 ')==len(re.findall(r'^## ', source, re.M))
     assert '<script' not in content

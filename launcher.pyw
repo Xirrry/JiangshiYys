@@ -22,26 +22,40 @@ VERSION_KEYS = ('last_app_version', 'last_patch_version', 'last_script_version',
 
 
 def resource_link(source, dest, profile):
+    """Repair one private resource entry, retaining old directories or links."""
     import _winapi
+    source, dest, profile = Path(source), Path(dest), Path(profile)
     if not source.is_dir():
         return
+    private = profile.resolve()
+    parent = dest.parent.resolve()
+    target = source.resolve()
+    if parent == private or not parent.is_relative_to(private) or target.is_relative_to(private):
+        raise ValueError('资源修复路径必须位于角色目录内，且来源为独立游戏资源')
+    # Do not walk through an intermediate link into shared or unrelated data.
+    current = dest.parent
+    while current != profile:
+        if current.is_symlink() or current.is_junction():
+            raise ValueError('资源修复路径的上级目录不能是链接')
+        if current == current.parent:
+            raise ValueError('资源修复路径无效')
+        current = current.parent
     if os.path.lexists(dest):
-        if dest.is_junction() or dest.is_symlink():
-            if dest.resolve() != source.resolve():
-                raise ValueError(f'资源链接指向其他位置，不会覆盖：{dest}')
+        linked = dest.is_junction() or dest.is_symlink()
+        if linked and dest.resolve() == target:
             return
-        # Rename exactly one private directory, retaining partial downloads.
-        # Both paths must stay inside this account, never inside shared game data.
-        if not dest.is_dir() or not dest.resolve().is_relative_to(profile.resolve()):
+        if not linked and (not dest.is_dir() or not dest.resolve().is_relative_to(private)):
             raise ValueError(f'资源目录不可安全迁移：{dest}')
+        # The explicitly checked single entry is renamed; linked targets are never moved.
         backup = dest.with_name(dest.name + '.before-resource-fix-' + str(time.time_ns()))
-        if not backup.parent.resolve().is_relative_to(profile.resolve()):
+        if backup.parent.resolve() != parent or not backup.parent.resolve().is_relative_to(private):
             raise ValueError('备份路径超出账号目录')
         dest.rename(backup)
         try:
             _winapi.CreateJunction(str(source), str(dest))
         except OSError:
-            backup.rename(dest)
+            if not os.path.lexists(dest):
+                backup.rename(dest)
             raise
     else:
         _winapi.CreateJunction(str(source), str(dest))
@@ -151,14 +165,7 @@ def prepare(base, game, account_id, preferences=None):
         private_dir(profile / rel)
     cwd = profile / 'game'
     for name in SHARED:
-        source, dest = game / name, cwd / name
-        if not source.is_dir():
-            continue
-        if os.path.lexists(dest):
-            if not dest.is_junction() or dest.resolve() != source.resolve():
-                raise ValueError(f'资源路径已被占用，不会覆盖：{dest}')
-        else:
-            _winapi.CreateJunction(str(source), str(dest))
+        resource_link(game / name, cwd / name, profile)
     for name in DOCUMENT_RESOURCES:
         resource_link(game / 'Documents' / name, cwd / 'Documents' / name, profile)
     sync_resource_versions(game, cwd)

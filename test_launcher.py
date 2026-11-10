@@ -67,3 +67,45 @@ assert len(list(partial.parent.glob('cloudfilesys3.before-resource-fix-*'))) == 
 print('PASS: shared downloaded resources, version markers only, partial download backups, private login preserved, repeat preparation.')
 print('PASS: separate child environments and caches, shared resources, persistent private configuration, PID creation-time checks.')
 print(f'Artifacts: {artifacts}')
+
+# Copied data may contain ordinary resource folders instead of junctions.
+migrated=app.account_folder(base,'migrated-data')
+(migrated/'game/bin').mkdir(parents=True)
+(migrated/'game/res').mkdir()
+(migrated/'game/res/copied-resource.dat').write_bytes(b'keep-copied-resource')
+(source/'res').mkdir()
+(migrated/'AppData/Roaming/Netease/Mpay').mkdir(parents=True)
+login=migrated/'AppData/Roaming/Netease/Mpay/private-fixture.db'
+login.write_bytes(b'fixture-login-bytes')
+app.prepare(base,source,'migrated-data')
+assert (migrated/'game/bin').is_junction()
+assert (migrated/'game/res').resolve()==(source/'res').resolve()
+assert len(list((migrated/'game').glob('bin.before-resource-fix-*')))==1
+res_backup=next((migrated/'game').glob('res.before-resource-fix-*'))
+assert (res_backup/'copied-resource.dat').read_bytes()==b'keep-copied-resource'
+assert login.read_bytes()==b'fixture-login-bytes'
+app.prepare(base,source,'migrated-data')
+assert len(list((migrated/'game').glob('res.before-resource-fix-*')))==1
+# A link to an old game location is itself backed up; its target is untouched.
+old_source=artifacts/'old-game';(old_source/'bin').mkdir(parents=True)
+(old_source/'bin/keep.dat').write_bytes(b'old-shared-resource')
+stale=app.account_folder(base,'stale-link');(stale/'game').mkdir(parents=True)
+import _winapi
+_winapi.CreateJunction(str(old_source/'bin'),str(stale/'game/bin'))
+app.prepare(base,source,'stale-link')
+assert (stale/'game/bin').resolve()==(source/'bin').resolve()
+assert (old_source/'bin/keep.dat').read_bytes()==b'old-shared-resource'
+stale_backup=next((stale/'game').glob('bin.before-resource-fix-*'))
+assert stale_backup.is_junction() and stale_backup.resolve()==(old_source/'bin').resolve()
+# External destinations and failure rollback cannot discard private content.
+try:app.resource_link(source/'bin',artifacts/'outside-bin',migrated)
+except ValueError:pass
+else:raise AssertionError('external destination accepted')
+from unittest.mock import patch
+rollback=migrated/'game/rollback';rollback.mkdir();(rollback/'keep.txt').write_text('keep')
+with patch.object(_winapi,'CreateJunction',side_effect=OSError('fixture failure')):
+    try:app.resource_link(source/'bin',rollback,migrated)
+    except OSError:pass
+    else:raise AssertionError('failure not propagated')
+assert (rollback/'keep.txt').read_text()=='keep' and not rollback.is_junction()
+print('PASS: migrated empty/nonempty shared folders, stale links, private login bytes unchanged, repeat repair, scoped destination and rollback; no files deleted')
