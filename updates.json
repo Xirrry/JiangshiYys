@@ -1,0 +1,98 @@
+[
+  {
+    "tag_name": "v9.49-experimental",
+    "prerelease": true,
+    "draft": false,
+    "body": "## 僵尸痒痒鼠 v9.49 测试版\r\n\r\n新增软件内更新入口，并优先读取仓库公开更新清单，避免 GitHub 匿名 API 共享出口限流：\r\n\r\n- 「关于与作者 → 软件更新」检查 GitHub Releases，查看新版说明。\r\n- 启动时自动检查，可关闭；发现新版时显示侧栏提示。\r\n- 下载完整 Windows x64 包，显示进度，完成后验证大小与 GitHub SHA-256。\r\n- 下载失败可重试，也可打开发布页；完成后可打开下载目录。\r\n- 检查不发送账号、代理或设备配置，网络操作在后台执行。\r\n\r\n当前采用**下载后手动升级**，不自动覆盖运行中的程序或个人 data。v9.47 用户首次请手动下载本版；退出游戏、代理会话与启动器，先备份 data，再按内置手册迁移。完整解压后运行「僵尸痒痒鼠.exe」，无需安装 Python / Node.js，需要 Windows x64、WebView2 Runtime 和新版游戏客户端。\r\n\r\n**IP 代理和设备接口功能未经完整测试，不保证可行性、兼容性或稳定性，请谨慎使用。** 代理检测通过不代表所有游戏流量已代理；设备功能不保证形成独立硬件身份。默认关闭设备实验；内置代理只转发单角色 IPv4 TCP，不含 UDP/IPv6；老鱼免费版未接入。\r\n\r\n更新模块的版本通道、地址限制、摘要校验、损坏下载和网络失败、设置与桥接测试，以及编译后隔离自检通过。未完成异机与全部游戏场景验收；未作商业代码签名。\r\n\r\n作者：昔乃｜QQ：3499049029｜邮箱：xiryy@qq.com\r\n\r\nSHA-256：`bee2af513a582fb37f01815b932fee89f49087eb85373429767220d46875b3f9`\r\n",
+    "assets": [
+      {
+        "name": "JiangshiYys-9.49-experimental-win-x64.zip",
+        "size": 22172510,
+        "digest": "sha256:bee2af513a582fb37f01815b932fee89f49087eb85373429767220d46875b3f9",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.49-experimental/JiangshiYys-9.49-experimental-win-x64.zip"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 109,
+        "digest": "sha256:d7f34bcf26cec029fed8dfdfe13d22915faadb36d2df0a0b4456d44760a73e74",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.49-experimental/SHA256SUMS.txt"
+      },
+      {
+        "name": "User-Manual.html",
+        "size": 32052,
+        "digest": "sha256:c8c26403b6575e944e53d63146659b39672e9dc8fa54caa7480df35696d2af5a",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.49-experimental/User-Manual.html"
+      },
+      {
+        "name": "User-Manual.md",
+        "size": 25685,
+        "digest": "sha256:02b99700cc8ef0ae8d7f868487b11d64cc41a4d4394ad0689cd7fb7802fd51d2",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.49-experimental/User-Manual.md"
+      }
+    ]
+  },
+  {
+    "tag_name": "v9.48-experimental",
+    "prerelease": true,
+    "draft": false,
+    "body": "## 僵尸痒痒鼠 v9.48 测试版\r\n\r\n新增软件内更新入口：\r\n\r\n- 「关于与作者 → 软件更新」检查 GitHub Releases，查看新版说明。\r\n- 启动时自动检查，可关闭；发现新版时显示侧栏提示。\r\n- 下载完整 Windows x64 包，显示进度，完成后验证大小与 GitHub SHA-256。\r\n- 下载失败可重试，也可打开发布页；完成后可打开下载目录。\r\n- 检查不发送账号、代理或设备配置，网络操作在后台执行。\r\n\r\n当前采用**下载后手动升级**，不自动覆盖运行中的程序或个人 data。v9.47 用户首次请手动下载本版；退出游戏、代理会话与启动器，先备份 data，再按内置手册迁移。完整解压后运行「僵尸痒痒鼠.exe」，无需安装 Python / Node.js，需要 Windows x64、WebView2 Runtime 和新版游戏客户端。\r\n\r\n**IP 代理和设备接口功能未经完整测试，不保证可行性、兼容性或稳定性，请谨慎使用。** 代理检测通过不代表所有游戏流量已代理；设备功能不保证形成独立硬件身份。默认关闭设备实验；内置代理只转发单角色 IPv4 TCP，不含 UDP/IPv6；老鱼免费版未接入。\r\n\r\n更新模块的版本通道、地址限制、摘要校验、损坏下载和网络失败、设置与桥接测试，以及编译后隔离自检通过。未完成异机与全部游戏场景验收；未作商业代码签名。\r\n\r\n作者：昔乃｜QQ：3499049029｜邮箱：xiryy@qq.com\r\n\r\nSHA-256：`da86cf7a7ae6f505c45bfc5e6c5bbdc23df8ba3336a3d27b4591a032aa97c546`\r\n",
+    "assets": [
+      {
+        "name": "JiangshiYys-9.48-experimental-win-x64.zip",
+        "size": 22171679,
+        "digest": "sha256:da86cf7a7ae6f505c45bfc5e6c5bbdc23df8ba3336a3d27b4591a032aa97c546",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.48-experimental/JiangshiYys-9.48-experimental-win-x64.zip"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 109,
+        "digest": "sha256:d027c7098c5155fac5223f164be6f9fb112491eb1a360c62ae5aeb11f269e9a2",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.48-experimental/SHA256SUMS.txt"
+      },
+      {
+        "name": "User-Manual.html",
+        "size": 32013,
+        "digest": "sha256:7771cab4b57d17c3fea493f64588e2b88b9d0f905f938d90e7887e5db4ae0032",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.48-experimental/User-Manual.html"
+      },
+      {
+        "name": "User-Manual.md",
+        "size": 25646,
+        "digest": "sha256:5f3474f43b0f7d9178d31cfa50e36695d5d6594ca2465c5c513a147f905e6c98",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.48-experimental/User-Manual.md"
+      }
+    ]
+  },
+  {
+    "tag_name": "v9.47-experimental",
+    "prerelease": true,
+    "draft": false,
+    "body": "僵尸痒痒鼠 v9.47 测试版\r\n\r\n作者：昔乃｜QQ：3499049029｜邮箱：xiryy@qq.com\r\n\r\n## 下载与运行\r\n\r\n下载 `JiangshiYys-9.47-experimental-win-x64.zip`，完整解压后运行「僵尸痒痒鼠.exe」。适用于 Windows x64；需要 WebView2 Runtime 和已安装的新版阴阳师桌面客户端，不需要自行安装 Python 或 Node.js。\r\n\r\n## 功能\r\n\r\n- 角色独立缓存、平安志同步、角色分组及多视图。\r\n- 启动方案、成员排序、单角色启动、启动延迟、窗口排列与关闭。\r\n- 全局、角色、方案三级游戏声音、动画和画质设置。\r\n- 内置单角色 TCP 代理与老鱼专业版 API 对接。\r\n- 默认关闭的角色级设备接口实验与按需状态核验。\r\n- 游戏目录检测、已移除角色永久删除并清理私有缓存。\r\n\r\n## 本版更新与警告\r\n\r\n代理管理、角色绑定及设备设置新增醒目警告，内置与离线手册同步更新。设备状态区分配置、加载与核验结果，旧结果按游戏进程身份失效。\r\n\r\n**IP 代理与设备接口功能未经完整测试，不保证可行性、兼容性或稳定性，请谨慎使用。** 代理检测通过不代表游戏所有流量均已代理；设备实验不保证形成独立硬件身份。内置代理仅提供单角色 IPv4 TCP 转发，UDP/IPv6 未提供；老鱼免费版未接入。设备实验未覆盖启动早期、MachineGuid、固件或 SDK 缓存。\r\n\r\n已完成本机构建与隔离自检，指定角色的庭院运行由用户确认。未完成异机、全部玩法、代理与设备组合及多设备角色并发验收；程序未做商业代码签名。\r\n\r\n## 升级与源码\r\n\r\n升级前关闭游戏、代理会话和启动器，并备份旧 data；按手册迁移数据。不要用新包覆盖后直接清理旧缓存。源码位于仓库，仓库和发行包均不含开发者的账号缓存、代理凭证或个人会话。第三方组件保留各自许可证。\r\n\r\nSHA-256：`66d919d12789fadd970abc9b567f2d1d93323a5d2d8aeb67dbbd591f83a4c37a`\r\n",
+    "assets": [
+      {
+        "name": "JiangshiYys-9.47-experimental-win-x64.zip",
+        "size": 22141229,
+        "digest": "sha256:66d919d12789fadd970abc9b567f2d1d93323a5d2d8aeb67dbbd591f83a4c37a",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.47-experimental/JiangshiYys-9.47-experimental-win-x64.zip"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 109,
+        "digest": "sha256:cd864e643520becd74357a50ea666f1f80d2eeaf9627fb49f1a6db74e6702d05",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.47-experimental/SHA256SUMS.txt"
+      },
+      {
+        "name": "User-Manual.html",
+        "size": 30884,
+        "digest": "sha256:4cf4cccfe7f6e7bb70a03dd2358c2ab3bc5b4e65e3c15631bb2f5546980a530c",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.47-experimental/User-Manual.html"
+      },
+      {
+        "name": "User-Manual.md",
+        "size": 24676,
+        "digest": "sha256:421070a8b4fd7c2699599519eea51d9a4489b283b0e104bf467d09f720d3d3c6",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.47-experimental/User-Manual.md"
+      }
+    ]
+  }
+]
