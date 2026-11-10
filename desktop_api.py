@@ -20,6 +20,7 @@ import game_preferences
 import game_discovery
 import profile_cleanup
 import device_identity
+import app_updates
 
 ROOT = Path(__file__).resolve().parent
 
@@ -41,6 +42,7 @@ class DesktopApi:
         self._launch_status = {}
         self._cleanup_plans = {}
         self._device_sessions = {}
+        self._updates = app_updates.UpdateManager(self._root, json.loads((ROOT / "brand.json").read_text(encoding="utf-8")))
         self._allow_close = False
         self._proxies = proxy_support.ProxyStore(self._root)
         self._note('Vue 桌面版已就绪，原有角色、分组和排列方案已保留。')
@@ -94,7 +96,27 @@ class DesktopApi:
                     elif route.get('phase')=='cancelled':
                         self._launch_status[key]={**self._launch_status.get(key,{}),'phase':'cancelled','error':''}
             return {'config': cfg, 'states': states, 'devices': devices, 'screens': window_layout.screens(), 'logs': self._logs,
-                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'version': 'v9.47', 'source_root': str(pinganzhi_sync.default_root())}
+                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v9.48', 'source_root': str(pinganzhi_sync.default_root())}
+
+    def update(self, action='status', payload=None):
+        try:
+            if action == 'startup':
+                data = self._updates.start('check') if self._updates.auto else self._updates.status()
+            elif action in ('check', 'download'):
+                data = self._updates.start(action)
+            elif action == 'settings':
+                data = self._updates.settings((payload or {}).get('auto_check'))
+            elif action == 'page':
+                data = self._updates.open_page()
+            elif action == 'folder':
+                data = self._updates.open_download()
+            elif action == 'status':
+                data = self._updates.status()
+            else:
+                raise ValueError('不支持的更新操作')
+            return {'ok': True, 'data': data}
+        except Exception as error:
+            return {'ok': False, 'error': str(error)}
 
     def choose_folder(self):
         import webview

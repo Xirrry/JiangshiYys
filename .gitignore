@@ -20,3 +20,4 @@ release_tools/latest-*.json
 release_tools/github-cli/
 experiments/**/build/
 experiments/**/result-*.json
+update-downloads/

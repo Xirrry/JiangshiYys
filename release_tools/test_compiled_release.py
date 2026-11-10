@@ -14,7 +14,7 @@ assert not any('site-packages' in p or 'Python312' in p for p in sys.path)
 import yys_core
 modules=['app','desktop_api','business','cache_import','close_guard','game_preferences','game_discovery','profile_cleanup',
          'laoyu_controller','laoyu_support','launcher_workspace','pinganzhi_sync','proxy_dns','proxy_support',
-         'device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
+         'app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
 for name in modules:
     module=importlib.import_module('yys_core.'+name)
     assert hasattr(module,'__compiled__'),name
@@ -82,3 +82,9 @@ with patch.object(profile_cleanup.os,'rmdir'):
     profile_cleanup.execute(single.parent,profile_cleanup.inspect(single.parent,single))
 assert not marker.exists()
 print('PASS: compiled game discovery, preference precedence, removal preview/token/delegation and one explicit test marker unlink; no user cache or directory deleted',flush=True)
+
+assert api.update('status')['ok']
+assert api.update('settings', {'auto_check': False})['ok']
+assert api.update('startup')['data']['auto_check'] is False
+assert not api.update('arbitrary')['ok']
+print('PASS: compiled update bridge and preferences; no network requested')
