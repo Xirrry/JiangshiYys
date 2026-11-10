@@ -1,5 +1,37 @@
 [
   {
+    "tag_name": "v9.51-experimental",
+    "prerelease": true,
+    "draft": false,
+    "body": "## 僵尸痒痒鼠 v9.51 · data 迁移修复\r\n\r\n修复从测试环境复制 data 到发布版后，出现“资源路径已被占用，不会覆盖”的问题。\r\n\r\n- 角色未运行时，在启动准备阶段检查顶层 bin、bin_patch、res、zipres、thd、thdext1 和已支持的 Documents 资源目录。\r\n- 复制形成的普通文件夹、指向旧游戏位置的链接，先在同一角色目录内改名备份，再重建指向当前游戏的资源链接。\r\n- 不删除原内容或原链接目标，不改写登录数据库和角色身份；正确链接不会重复备份。\r\n- 修复目标须位于该角色目录，拒绝通过上级链接修改外部位置；失败时尽量恢复原目录。备份名为 `.before-resource-fix-编号`，可能占用空间，确认正常后由用户自行整理。\r\n\r\n空/非空复制目录、旧链接、重复执行、路径保护、失败回退、私有登录缓存字节保持，以及平安志同步和编译后自检通过。测试使用独立样例；未改动用户当前正常运行的目录。\r\n\r\n保留 v9.50 的自动安装及跨目录单例。v9.49 及以前没有安装助手，第一次换到本版仍需手动解压；v9.50 可使用软件内「下载并安装」。先保存方案、退出游戏及代理会话并备份 data。\r\n\r\n**代理与设备功能未经完整测试，不保证可行性、兼容性或稳定性。** 本版修复迁移链接，不宣称已经解决登录转圈停顿。\r\n\r\n作者：昔乃｜QQ：3499049029｜邮箱：xiryy@qq.com\r\n\r\nSHA-256：`1e3e6c256e10e5dbfb9dfb44179d8a0a1d760bf9d3d21b0456d219a11315e44c`\r\n",
+    "assets": [
+      {
+        "name": "JiangshiYys-9.51-experimental-win-x64.zip",
+        "size": 22286194,
+        "digest": "sha256:1e3e6c256e10e5dbfb9dfb44179d8a0a1d760bf9d3d21b0456d219a11315e44c",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.51-experimental/JiangshiYys-9.51-experimental-win-x64.zip"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 109,
+        "digest": "sha256:cb770f8aaf5dc3c2dea1d15fdcc6379aee6a13863d7b44b6d85eca83166cd11e",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.51-experimental/SHA256SUMS.txt"
+      },
+      {
+        "name": "User-Manual.html",
+        "size": 34665,
+        "digest": "sha256:a3e7f5e9accc7049acf813f90f20a3fd09a510d0114827c04ae47476d8c4ff78",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.51-experimental/User-Manual.html"
+      },
+      {
+        "name": "User-Manual.md",
+        "size": 28241,
+        "digest": "sha256:c7bb585764a826e08c16d315c3bc30c4fd7a7129433b437f10ae35d2d6c03fd0",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.51-experimental/User-Manual.md"
+      }
+    ]
+  },
+  {
     "tag_name": "v9.50-experimental",
     "prerelease": true,
     "draft": false,
