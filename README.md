@@ -1,0 +1,41 @@
+# 僵尸痒痒鼠
+
+作者：昔乃 · QQ：3499049029 · 邮箱：xiryy@qq.com
+
+Windows 阴阳师桌面版角色启动工具，使用 Python、Vue 3 与 WebView2。
+
+## 下载与运行
+
+在 [Releases](https://github.com/Xirrry/JiangshiYys/releases) 下载 Windows x64 完整包，解压后运行「僵尸痒痒鼠.exe」。需要 WebView2 Runtime 和已安装的游戏客户端。使用说明内置于软件，也可阅读仓库中的 [用户使用手册](用户使用手册.md)。
+
+v9.47 为测试版本。IP 代理和设备接口功能未经完整测试，不保证可行性、兼容性或稳定性。检测通过不代表所有游戏流量已代理，设备功能不保证形成独立硬件身份。
+
+## 功能
+
+- 独立角色缓存、平安志同步、角色分组及多视图管理。
+- 多个启动方案共享角色引用，支持排序、窗口排列、启动延迟和关闭。
+- 全局、角色与方案三级声音、动画及画质设置。
+- 内置单角色 TCP 代理和老鱼专业版 API 对接。
+- 默认关闭的设备接口实验与按需状态核验。
+- 游戏目录检测、已移除角色永久删除并清理私有缓存。
+
+## 源码运行
+
+使用 Windows x64、Python 3.12、Node.js 与 npm：
+
+```powershell
+python -m pip install -r requirements.txt
+npm --prefix frontend ci
+npm --prefix frontend run build
+python app.pyw
+```
+
+依赖可安装到当前 Python 环境，或通过 `--target vendor` 安装到本项目。硬件及代理原生 DLL、WinDivert 驱动随源码提供；普通源码启动不会自动加载驱动。首次使用请在界面配置游戏目录，不需要复制开发者的 data。
+
+## 构建与第三方组件
+
+原生组件和发行包构建说明见 [BUILDING.md](BUILDING.md)。第三方许可见 [第三方组件说明](第三方组件说明.md) 及相应目录中的许可文件。
+
+仓库不包含用户账号缓存、代理认证信息、个人会话或测试日志。请不要上传自己的 data、sessions 或 tickets。
+
+本次公开源码未另行授予第一方代码的开源许可证；第三方代码保留各自许可。公开可见不代表任意再分发授权。

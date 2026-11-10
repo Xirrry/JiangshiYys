@@ -1,0 +1,795 @@
+{
+  "capturedAt": "2026-10-09T23:09:34+08:00",
+  "servers": [
+    {
+      "id": "10001",
+      "name": "春之樱",
+      "internalName": "IOS正式服1"
+    },
+    {
+      "id": "10002",
+      "name": "夏之蝉",
+      "internalName": "IOS正式服2"
+    },
+    {
+      "id": "10003",
+      "name": "夜之月",
+      "internalName": "IOS正式服3"
+    },
+    {
+      "id": "10004",
+      "name": "网易-携手同心",
+      "internalName": "网易-双平台"
+    },
+    {
+      "id": "10005",
+      "name": "竹之幽",
+      "internalName": "IOS正式服4"
+    },
+    {
+      "id": "10006",
+      "name": "松之苍",
+      "internalName": "IOS正式服5"
+    },
+    {
+      "id": "10007",
+      "name": "兰之雅",
+      "internalName": "IOS正式服6"
+    },
+    {
+      "id": "10008",
+      "name": "雀之羽",
+      "internalName": "IOS正式服7"
+    },
+    {
+      "id": "10009",
+      "name": "云之遏",
+      "internalName": "IOS正式服8"
+    },
+    {
+      "id": "10012",
+      "name": "莲之净",
+      "internalName": "IOS正式服11"
+    },
+    {
+      "id": "10013",
+      "name": "桂之馥",
+      "internalName": "IOS正式服12"
+    },
+    {
+      "id": "10014",
+      "name": "相伴同行",
+      "internalName": "全平台正式服1"
+    },
+    {
+      "id": "10015",
+      "name": "旧友新朋",
+      "internalName": "全平台正式服2"
+    },
+    {
+      "id": "10016",
+      "name": "深情厚谊",
+      "internalName": "全平台正式服3"
+    },
+    {
+      "id": "10017",
+      "name": "相伴长情",
+      "internalName": "全平台正式服4"
+    },
+    {
+      "id": "10018",
+      "name": "朝夕相伴",
+      "internalName": "全平台正式服5"
+    },
+    {
+      "id": "10019",
+      "name": "携手共度",
+      "internalName": "全平台正式服6"
+    },
+    {
+      "id": "10020",
+      "name": "举手相庆",
+      "internalName": "全平台正式服7"
+    },
+    {
+      "id": "10021",
+      "name": "欢庆鼓舞",
+      "internalName": "全平台正式服8"
+    },
+    {
+      "id": "10022",
+      "name": "追月逐兔",
+      "internalName": "全平台正式服9"
+    },
+    {
+      "id": "10023",
+      "name": "依偎相守",
+      "internalName": "全平台正式服10"
+    },
+    {
+      "id": "10024",
+      "name": "暖风春穗",
+      "internalName": "全平台正式服11"
+    },
+    {
+      "id": "10025",
+      "name": "樱之忆",
+      "internalName": "全平台正式服12"
+    },
+    {
+      "id": "10026",
+      "name": "鬼灯的冷彻",
+      "internalName": "全平台正式服13"
+    },
+    {
+      "id": "10027",
+      "name": "初心未改",
+      "internalName": "全平台正式服14"
+    },
+    {
+      "id": "10028",
+      "name": "狐之宴",
+      "internalName": "全平台正式服15"
+    },
+    {
+      "id": "10029",
+      "name": "犬夜叉",
+      "internalName": "全平台正式服16"
+    },
+    {
+      "id": "10030",
+      "name": "立秋夕烛",
+      "internalName": "全平台正式服17"
+    },
+    {
+      "id": "10031",
+      "name": "枫之舞",
+      "internalName": "全平台正式服18"
+    },
+    {
+      "id": "10032",
+      "name": "雪之萤",
+      "internalName": "全平台正式服19"
+    },
+    {
+      "id": "10033",
+      "name": "游梦迷蝶",
+      "internalName": "全平台正式服20"
+    },
+    {
+      "id": "10034",
+      "name": "桃映春馨",
+      "internalName": "全平台正式服21"
+    },
+    {
+      "id": "10035",
+      "name": "竹风夏意",
+      "internalName": "全平台正式服22"
+    },
+    {
+      "id": "10036",
+      "name": "一叶禅心",
+      "internalName": "全平台正式服23"
+    },
+    {
+      "id": "10037",
+      "name": "夜火离歌",
+      "internalName": "全平台正式服24"
+    },
+    {
+      "id": "10038",
+      "name": "晴空日和",
+      "internalName": "全平台正式服25"
+    },
+    {
+      "id": "10039",
+      "name": "瀞灵廷",
+      "internalName": "全平台正式服26"
+    },
+    {
+      "id": "10040",
+      "name": "少时之约",
+      "internalName": "全平台正式服27"
+    },
+    {
+      "id": "10041",
+      "name": "鸣麓逐浪",
+      "internalName": "全平台正式服28"
+    },
+    {
+      "id": "10042",
+      "name": "八岐魅影",
+      "internalName": "全平台正式服29"
+    },
+    {
+      "id": "10043",
+      "name": "稚羽萌心",
+      "internalName": "全平台正式服30"
+    },
+    {
+      "id": "10044",
+      "name": "愿予必成",
+      "internalName": "全平台正式服31"
+    },
+    {
+      "id": "10045",
+      "name": "渡世之风",
+      "internalName": "全平台正式服32"
+    },
+    {
+      "id": "10046",
+      "name": "百鬼夜行",
+      "internalName": "全平台正式服33"
+    },
+    {
+      "id": "10047",
+      "name": "鬼王之宴",
+      "internalName": "全平台正式服34"
+    },
+    {
+      "id": "10048",
+      "name": "夏之风铃",
+      "internalName": "全平台正式服35"
+    },
+    {
+      "id": "10049",
+      "name": "雅乐之邦",
+      "internalName": "全平台正式服36"
+    },
+    {
+      "id": "10050",
+      "name": "四载平安",
+      "internalName": "全平台正式服37"
+    },
+    {
+      "id": "10051",
+      "name": "永生之海",
+      "internalName": "全平台正式服38"
+    },
+    {
+      "id": "10052",
+      "name": "森之王",
+      "internalName": "全平台正式服39"
+    },
+    {
+      "id": "10053",
+      "name": "彼世之花",
+      "internalName": "全平台正式服40"
+    },
+    {
+      "id": "10054",
+      "name": "鬼灭之刃",
+      "internalName": "全平台正式服41"
+    },
+    {
+      "id": "10055",
+      "name": "春告之雪",
+      "internalName": "全平台正式服42"
+    },
+    {
+      "id": "10056",
+      "name": "天上天下",
+      "internalName": "全平台正式服43"
+    },
+    {
+      "id": "10057",
+      "name": "唯吾独尊",
+      "internalName": "全平台正式服44"
+    },
+    {
+      "id": "10058",
+      "name": "旧时童梦",
+      "internalName": "全平台正式服45"
+    },
+    {
+      "id": "10059",
+      "name": "轮回之庭",
+      "internalName": "全平台正式服46"
+    },
+    {
+      "id": "10060",
+      "name": "绘世之卷",
+      "internalName": "全平台正式服47"
+    },
+    {
+      "id": "10061",
+      "name": "真味如初",
+      "internalName": "全平台正式服48"
+    },
+    {
+      "id": "10062",
+      "name": "相闻秋歌",
+      "internalName": "全平台正式服49"
+    },
+    {
+      "id": "10063",
+      "name": "白玉银阙",
+      "internalName": "全平台正式服50"
+    },
+    {
+      "id": "10064",
+      "name": "赤夜降临",
+      "internalName": "全平台正式服51"
+    },
+    {
+      "id": "10065",
+      "name": "铃心踏焰",
+      "internalName": "全平台正式服52"
+    },
+    {
+      "id": "10066",
+      "name": "念山行",
+      "internalName": "全平台正式服53"
+    },
+    {
+      "id": "10067",
+      "name": "樱月相邀",
+      "internalName": "全平台正式服54"
+    },
+    {
+      "id": "10068",
+      "name": "高天原",
+      "internalName": "全平台正式服55"
+    },
+    {
+      "id": "10069",
+      "name": "夜摩天殿",
+      "internalName": "全平台正式服56"
+    },
+    {
+      "id": "10070",
+      "name": "经霜之枫",
+      "internalName": "全平台正式服57"
+    },
+    {
+      "id": "10071",
+      "name": "浮梦之境",
+      "internalName": "全平台正式服58"
+    },
+    {
+      "id": "10072",
+      "name": "人间千年",
+      "internalName": "全平台正式服59"
+    },
+    {
+      "id": "10073",
+      "name": "御香归",
+      "internalName": "全平台正式服60"
+    },
+    {
+      "id": "10074",
+      "name": "四季生",
+      "internalName": "全平台正式服61"
+    },
+    {
+      "id": "10075",
+      "name": "镜如明心",
+      "internalName": "全平台正式服62"
+    },
+    {
+      "id": "10076",
+      "name": "今时月",
+      "internalName": "全平台正式服63"
+    },
+    {
+      "id": "10077",
+      "name": "天罗地网",
+      "internalName": "全平台正式服64"
+    },
+    {
+      "id": "10078",
+      "name": "真言之塔",
+      "internalName": "全平台正式服65"
+    },
+    {
+      "id": "10079",
+      "name": "万事屋",
+      "internalName": "全平台正式服66"
+    },
+    {
+      "id": "10080",
+      "name": "祈世之舞",
+      "internalName": "全平台正式服67"
+    },
+    {
+      "id": "10081",
+      "name": "森遥乡",
+      "internalName": "全平台正式服68"
+    },
+    {
+      "id": "10082",
+      "name": "结世缘",
+      "internalName": "全平台正式服69"
+    },
+    {
+      "id": "10083",
+      "name": "乾坤行",
+      "internalName": "全平台正式服70"
+    },
+    {
+      "id": "10084",
+      "name": "循光世",
+      "internalName": "全平台正式服71"
+    },
+    {
+      "id": "10085",
+      "name": "破晓之樱",
+      "internalName": "全平台正式服72"
+    },
+    {
+      "id": "10086",
+      "name": "灵狐愿",
+      "internalName": "全平台正式服73"
+    },
+    {
+      "id": "10087",
+      "name": "庭中酌",
+      "internalName": "全平台正式服74"
+    },
+    {
+      "id": "10088",
+      "name": "黄金爪",
+      "internalName": "全平台正式服75"
+    },
+    {
+      "id": "10089",
+      "name": "鲛人之歌",
+      "internalName": "全平台正式服76"
+    },
+    {
+      "id": "10090",
+      "name": "音起时",
+      "internalName": "全平台正式服77"
+    },
+    {
+      "id": "10091",
+      "name": "神鲤生财",
+      "internalName": "全平台正式服78"
+    },
+    {
+      "id": "10092",
+      "name": "雾山隐",
+      "internalName": "全平台正式服79"
+    },
+    {
+      "id": "10093",
+      "name": "麓海为王",
+      "internalName": "全平台正式服80"
+    },
+    {
+      "id": "10094",
+      "name": "猫川别馆",
+      "internalName": "全平台正式服81"
+    },
+    {
+      "id": "10095",
+      "name": "神之晚宴",
+      "internalName": "全平台正式服82"
+    },
+    {
+      "id": "10096",
+      "name": "花火之夏",
+      "internalName": "全平台正式服83"
+    },
+    {
+      "id": "10097",
+      "name": "有龙则灵",
+      "internalName": "全平台正式服84"
+    },
+    {
+      "id": "10098",
+      "name": "踏雪行",
+      "internalName": "全平台正式服85"
+    },
+    {
+      "id": "10099",
+      "name": "夜影之谜",
+      "internalName": "全平台正式服86"
+    },
+    {
+      "id": "10100",
+      "name": "千山醉",
+      "internalName": "全平台正式服87"
+    },
+    {
+      "id": "10101",
+      "name": "夏目友人帐",
+      "internalName": "全平台正式服88"
+    },
+    {
+      "id": "10102",
+      "name": "奏世之宴",
+      "internalName": "全平台正式服89"
+    },
+    {
+      "id": "10103",
+      "name": "花札物语",
+      "internalName": "全平台正式服90"
+    },
+    {
+      "id": "10104",
+      "name": "音巡夜",
+      "internalName": "全平台正式服91"
+    },
+    {
+      "id": "10105",
+      "name": "日轮之城",
+      "internalName": "全平台正式服92"
+    },
+    {
+      "id": "10106",
+      "name": "时海曜光",
+      "internalName": "全平台正式服93"
+    },
+    {
+      "id": "10107",
+      "name": "三途烽烬",
+      "internalName": "全平台正式服94"
+    },
+    {
+      "id": "10108",
+      "name": "守山谣",
+      "internalName": "全平台正式服95"
+    },
+    {
+      "id": "10109",
+      "name": "魔卡绮遇",
+      "internalName": "全平台正式服96"
+    },
+    {
+      "id": "10110",
+      "name": "百崽同行",
+      "internalName": "全平台正式服97"
+    },
+    {
+      "id": "10111",
+      "name": "常世之国",
+      "internalName": "全平台正式服98"
+    },
+    {
+      "id": "10112",
+      "name": "梦之间隙",
+      "internalName": "全平台正式服99"
+    },
+    {
+      "id": "10113",
+      "name": "梦山新话",
+      "internalName": "全平台正式服100"
+    },
+    {
+      "id": "10114",
+      "name": "织梦之墟",
+      "internalName": "全平台正式服101"
+    },
+    {
+      "id": "10115",
+      "name": "狐梦桃乡",
+      "internalName": "全平台正式服102"
+    },
+    {
+      "id": "10116",
+      "name": "月蚀长夜",
+      "internalName": "全平台正式服103"
+    },
+    {
+      "id": "10117",
+      "name": "良夜之畔",
+      "internalName": "全平台正式服104"
+    },
+    {
+      "id": "10118",
+      "name": "智识之火",
+      "internalName": "全平台正式服105"
+    },
+    {
+      "id": "10119",
+      "name": "七情之思",
+      "internalName": "全平台正式服106"
+    },
+    {
+      "id": "10120",
+      "name": "极乐砂城",
+      "internalName": "全平台正式服107"
+    },
+    {
+      "id": "10121",
+      "name": "砂狐乐园",
+      "internalName": "全平台正式服108"
+    },
+    {
+      "id": "10122",
+      "name": "天籁和音",
+      "internalName": "全平台正式服109"
+    },
+    {
+      "id": "10123",
+      "name": "永远的平安京",
+      "internalName": "全平台正式服110"
+    },
+    {
+      "id": "10124",
+      "name": "万千刹那",
+      "internalName": "全平台正式服111"
+    },
+    {
+      "id": "14001",
+      "name": "萌鼠驾到",
+      "internalName": "PTR游戏服2"
+    },
+    {
+      "id": "15001",
+      "name": "秋之枫",
+      "internalName": "安卓正式服1"
+    },
+    {
+      "id": "15002",
+      "name": "冬之雪",
+      "internalName": "安卓正式服2"
+    },
+    {
+      "id": "15003",
+      "name": "网易-结伴同游",
+      "internalName": "网易-双平台2"
+    },
+    {
+      "id": "15004",
+      "name": "B站-两心无间",
+      "internalName": "网易-双平台3"
+    },
+    {
+      "id": "15005",
+      "name": "网易-相伴相随",
+      "internalName": "网易-双平台4"
+    },
+    {
+      "id": "15006",
+      "name": "暮之霞",
+      "internalName": "安卓正式服3"
+    },
+    {
+      "id": "15007",
+      "name": "网易-情比金坚",
+      "internalName": "网易-双平台5"
+    },
+    {
+      "id": "15008",
+      "name": "风之清",
+      "internalName": "安卓正式服5"
+    },
+    {
+      "id": "15009",
+      "name": "梅之寒",
+      "internalName": "安卓正式服4"
+    },
+    {
+      "id": "15010",
+      "name": "网易-形影不离",
+      "internalName": "网易-双平台6"
+    },
+    {
+      "id": "15011",
+      "name": "网易-同心一意",
+      "internalName": "网易-双平台7"
+    },
+    {
+      "id": "15012",
+      "name": "B站-亲密无间",
+      "internalName": "网易-双平台8"
+    },
+    {
+      "id": "15014",
+      "name": "雨之霁",
+      "internalName": "安卓正式服7"
+    },
+    {
+      "id": "15016",
+      "name": "网易-相知相依",
+      "internalName": "网易-双平台9"
+    },
+    {
+      "id": "15017",
+      "name": "网易-心意相通",
+      "internalName": "网易-双平台10"
+    },
+    {
+      "id": "15020",
+      "name": "网易-永生之谜",
+      "internalName": "网易-双平台13"
+    },
+    {
+      "id": "15021",
+      "name": "B站-情深谊长",
+      "internalName": "网易-双平台14"
+    },
+    {
+      "id": "15022",
+      "name": "网易-缥缈之旅",
+      "internalName": "网易-双平台15"
+    },
+    {
+      "id": "15023",
+      "name": "雀之灵",
+      "internalName": "安卓正式服9"
+    },
+    {
+      "id": "15024",
+      "name": "网易-遥远之忆",
+      "internalName": "网易-双平台16"
+    },
+    {
+      "id": "15025",
+      "name": "网易-孤高之心",
+      "internalName": "网易-双平台17"
+    },
+    {
+      "id": "15026",
+      "name": "桃之华",
+      "internalName": "安卓正式服10"
+    },
+    {
+      "id": "15027",
+      "name": "网易-风雨同行",
+      "internalName": "网易-双平台18"
+    },
+    {
+      "id": "15028",
+      "name": "菊之逸",
+      "internalName": "安卓正式服11"
+    },
+    {
+      "id": "15029",
+      "name": "网易-两情相悦",
+      "internalName": "网易-双平台19"
+    },
+    {
+      "id": "15030",
+      "name": "网易-春樱共赏",
+      "internalName": "网易-双平台20"
+    },
+    {
+      "id": "15031",
+      "name": "樱之华",
+      "internalName": "安卓正式服12"
+    },
+    {
+      "id": "15032",
+      "name": "网易-谜之暗影",
+      "internalName": "网易-双平台21"
+    },
+    {
+      "id": "15033",
+      "name": "B站-情意相投",
+      "internalName": "网易-双平台22"
+    },
+    {
+      "id": "15048",
+      "name": "安卓体验服",
+      "internalName": "安卓体验服"
+    },
+    {
+      "id": "15049",
+      "name": "抢先体验服",
+      "internalName": "抢先体验服"
+    },
+    {
+      "id": "16001",
+      "name": "海外加速区",
+      "internalName": "国际服"
+    },
+    {
+      "id": "16002",
+      "name": "全球国际区",
+      "internalName": "全球国际区"
+    },
+    {
+      "id": "20009",
+      "name": "审核服",
+      "internalName": "北美IOS审核服"
+    },
+    {
+      "id": "20016",
+      "name": "式神测试",
+      "internalName": "PTR游戏服"
+    }
+  ]
+}
