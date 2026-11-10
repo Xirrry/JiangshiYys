@@ -99,7 +99,7 @@ class DesktopApi:
                     elif route.get('phase')=='cancelled':
                         self._launch_status[key]={**self._launch_status.get(key,{}),'phase':'cancelled','error':''}
             return {'config': cfg, 'states': states, 'devices': devices, 'screens': window_layout.screens(), 'logs': self._logs,
-                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v9.51', 'source_root': str(pinganzhi_sync.default_root())}
+                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v9.52', 'source_root': str(pinganzhi_sync.default_root())}
 
     def update(self, action='status', payload=None):
         try:

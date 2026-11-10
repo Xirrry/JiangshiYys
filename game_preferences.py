@@ -5,7 +5,7 @@ from pathlib import Path
 import uuid
 
 DEFAULTS={'mute_all':True,'skip_intro':True,'lowest_graphics':True}
-LOW_VALUES={k:0 for k in ('frame_rate','render_scale','shadow','shader','post_process','msaa',
+LOW_VALUES={k:0 for k in ('frame_rate','render_scale','shadow','shader','post_process',
     'ssl_light','scene_detail','effect','reflection','outline','unreal','hd_font','ui_effect')}
 
 def normalize(prefs=None):
@@ -49,8 +49,7 @@ def patch(data,prefs=None):
         values=old.get('values',{})
         if not isinstance(values,dict):raise ValueError('画质细项格式无效，未修改')
         result['graphics_quality_state']={**old,'version':3,'preset':'very_low','values':{**values,**LOW_VALUES}}
-        # The game's very_low preset still enables AA. Explicitly disable both stores.
-        result['msaa_switch']=False
+        # Antialiasing is owned by the game: retain msaa and msaa_switch unchanged.
     return result
 
 def apply(file,profiles_root,prefs=None):
