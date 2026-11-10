@@ -27,3 +27,7 @@ release_tools/compile_core.py 使用 Nuitka 模块模式编译第一方 Python�
 ## 发布更新清单
 
 GitHub Release 附件上传且校验后，执行 `python release_tools/update_feed.py` 生成 updates.json，检查并提交到 main。脚本需要已登录的官方 gh CLI；该凭证不会包含在公开清单中。软件优先读取公开清单，避免匿名 API 共享出口限流。
+
+## 自动安装助手
+
+在 Visual Studio x64 开发者命令提示符中使用 `cl /utf-8 /O2 /MT release_tools\native-source\update_helper.c /FeApplyUpdate.exe /link shell32.lib user32.lib /SUBSYSTEM:WINDOWS` 构建。二进制发行脚本会自动编译。源码运行要使用自动安装也需要根目录的 ApplyUpdate.exe。`test_single_instance.py` 使用独立命名锁；`release_tools/test_update_helper.py` 仅在保留的样例目录验证切换和恢复，不用用户 data。

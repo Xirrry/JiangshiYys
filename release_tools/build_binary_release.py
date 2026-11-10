@@ -96,12 +96,18 @@ def main():
     c=c.replace('L"\\\"%s\\\" -B \\\"%s\\\"",python,script', 'L"\\\"%s\\\" -B -c \\\"import yys_core; yys_core.main()\\\"",python')
     assert ' -B -c ' in c
     (native/'launcher_bootstrap.c').write_text(c,encoding='utf-8')
-    for name in ['app.rc','app.ico']:copy(ROOT/'release_tools/native-source'/name,native/name)
+    for name in ['app.rc','app.ico','update_helper.c']:copy(ROOT/'release_tools/native-source'/name,native/name)
     command='@echo off\nchcp 65001 >nul\ncall "D:\\App\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat" x64 >nul\nif errorlevel 1 exit /b 1\ncd /d "%~dp0"\nrc /nologo /fo app.res app.rc\nif errorlevel 1 exit /b 1\ncl /nologo /utf-8 /O2 /W4 /MT /guard:cf launcher_bootstrap.c app.res /Fe"'+str(package/'僵尸痒痒鼠.exe')+'" /link user32.lib /SUBSYSTEM:WINDOWS /DYNAMICBASE /NXCOMPAT /HIGHENTROPYVA /MANIFEST:EMBED /MANIFESTUAC:"level=\'asInvoker\' uiAccess=\'false\'"\nexit /b %errorlevel%\n'
     (native/'build.cmd').write_text(command,encoding='utf-8',newline='\r\n')
     r=subprocess.run(['cmd','/c',str(native/'build.cmd')],cwd=native,capture_output=True)
     (batch/'native-build.log').write_bytes(r.stdout+r.stderr)
     if r.returncode:raise RuntimeError('Native entry build failed')
+    helper_command='@echo off\nchcp 65001 >nul\ncall "D:\\App\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat" x64 >nul\nif errorlevel 1 exit /b 1\ncd /d "%~dp0"\ncl /nologo /utf-8 /O2 /W4 /MT update_helper.c /Fe"'+str(package/'ApplyUpdate.exe')+'" /link shell32.lib user32.lib /SUBSYSTEM:WINDOWS /DYNAMICBASE /NXCOMPAT\nexit /b %errorlevel%\n'
+    (native/'build-helper.cmd').write_text(helper_command,encoding='utf-8',newline='\r\n')
+    helper_result=subprocess.run(['cmd','/c',str(native/'build-helper.cmd')],cwd=native,capture_output=True)
+    (batch/'helper-build.log').write_bytes(helper_result.stdout+helper_result.stderr)
+    if helper_result.returncode:raise RuntimeError('Update helper build failed')
+
     # Test an exact copy; distributable directory must remain pristine.
     smoke=batch/'smoke-test/app';shutil.copytree(package,smoke)
     test=ROOT/'release_tools/test_compiled_release.py'

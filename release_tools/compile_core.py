@@ -12,7 +12,7 @@ import time
 
 ROOT=Path(__file__).resolve().parents[1]
 FILES=['app.pyw','desktop_api.py','launcher.pyw','cache_import.py','close_guard.py','game_preferences.py',
-       'game_discovery.py','app_updates.py','device_identity.py','profile_cleanup.py','laoyu_controller.py','laoyu_support.py','launcher_workspace.py',
+       'game_discovery.py','single_instance.py','app_updates.py','device_identity.py','profile_cleanup.py','laoyu_controller.py','laoyu_support.py','launcher_workspace.py',
        'pinganzhi_sync.py','proxy_dns.py','proxy_support.py','role_reader.py','window_layout.py',
        'proxy-engine-experiment/game_tcp_trial.py','proxy-engine-experiment/trial_job.py','proxy-engine-experiment/dns_bridge.py']
 OWN={Path(name).stem for name in FILES}-{'launcher'}|{'business','module_properties'}

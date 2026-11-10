@@ -2,8 +2,8 @@
 #include <windows.h>
 1 ICON "app.ico"
 1 VERSIONINFO
-FILEVERSION 9,49,0,0
-PRODUCTVERSION 9,49,0,0
+FILEVERSION 9,50,0,0
+PRODUCTVERSION 9,50,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS VOS_NT_WINDOWS32
@@ -15,11 +15,11 @@ BEGIN
     BEGIN
       VALUE "CompanyName", "昔乃\0"
       VALUE "FileDescription", "僵尸痒痒鼠\0"
-      VALUE "FileVersion", "9.49.0.0\0"
+      VALUE "FileVersion", "9.50.0.0\0"
       VALUE "InternalName", "JiangshiYysLauncher\0"
       VALUE "OriginalFilename", "僵尸痒痒鼠.exe\0"
       VALUE "ProductName", "僵尸痒痒鼠\0"
-      VALUE "ProductVersion", "9.49\0"
+      VALUE "ProductVersion", "9.50\0"
     END
   END
   BLOCK "VarFileInfo"

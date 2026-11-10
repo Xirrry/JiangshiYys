@@ -43,6 +43,9 @@ class DesktopApi:
         self._cleanup_plans = {}
         self._device_sessions = {}
         self._updates = app_updates.UpdateManager(self._root, json.loads((ROOT / "brand.json").read_text(encoding="utf-8")))
+        self._updating = False
+        self._updates.install_callback = self._complete_update
+        self._updates.install_failed = self._update_failed
         self._allow_close = False
         self._proxies = proxy_support.ProxyStore(self._root)
         self._note('Vue 桌面版已就绪，原有角色、分组和排列方案已保留。')
@@ -96,14 +99,18 @@ class DesktopApi:
                     elif route.get('phase')=='cancelled':
                         self._launch_status[key]={**self._launch_status.get(key,{}),'phase':'cancelled','error':''}
             return {'config': cfg, 'states': states, 'devices': devices, 'screens': window_layout.screens(), 'logs': self._logs,
-                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v9.49', 'source_root': str(pinganzhi_sync.default_root())}
+                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v9.50', 'source_root': str(pinganzhi_sync.default_root())}
 
     def update(self, action='status', payload=None):
         try:
             if action == 'startup':
                 data = self._updates.start('check') if self._updates.auto else self._updates.status()
+            elif action in ('install', 'download_install'):
+                return self._request_update_install(action, payload or {})
             elif action in ('check', 'download'):
                 data = self._updates.start(action)
+            elif action == 'cancel':
+                data = self._updates.cancel()
             elif action == 'settings':
                 data = self._updates.settings((payload or {}).get('auto_check'))
             elif action == 'page':
@@ -118,6 +125,61 @@ class DesktopApi:
         except Exception as error:
             return {'ok': False, 'error': str(error)}
 
+    def _request_update_install(self, action, payload):
+        with self._lock:
+            if payload.get('confirm') is not True:
+                raise ValueError('请确认安装并重启')
+            if self._updating or self._updates.busy:
+                raise ValueError('已有更新操作正在处理')
+            self._check_update_idle()
+            self._updating = True
+            try:
+                return {'ok': True, 'data': self._updates.start(action)}
+            except Exception:
+                self._updating = False
+                raise
+
+    def _check_update_idle(self):
+        for role in self._roles():
+            state = self._state(role['id'])
+            # Treat inaccessible/reused tracked processes conservatively.
+            if state.get('pid'):
+                import ctypes
+                from ctypes import wintypes
+                kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+                kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+                kernel.OpenProcess.restype = wintypes.HANDLE
+                kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+                process = kernel.OpenProcess(0x1000, False, int(state['pid']))
+                if process:
+                    kernel.CloseHandle(process)
+                    actual = self._app.process_stamp(int(state['pid']))
+                    if actual and state.get('stamp') and actual != state['stamp']:
+                        continue
+                    raise ValueError('请先关闭所有已启动的游戏窗口，再安装更新。')
+                if ctypes.get_last_error() != 87:
+                    raise ValueError('无法确认游戏已经退出，请退出游戏后重试。')
+        if any(x.get('active') for x in self._proxy_routes().values()) or any(self._device_session_alive(k) for k in self._device_sessions):
+            raise ValueError('请先结束游戏及代理会话，再安装更新。')
+        if any(x.get('phase') in ('starting', 'requesting', 'queued') for x in self._launch_status.values()):
+            raise ValueError('启动操作尚未结束，请稍后再安装。')
+
+    def _update_failed(self):
+        with self._lock:
+            self._updating = False
+
+    def _complete_update(self, job):
+        import os
+        import webview
+        with self._lock:
+            self._check_update_idle()
+            stamp = self._app.process_stamp(os.getpid())
+            if not stamp:
+                raise ValueError('无法核对当前进程，安装已停止')
+            subprocess.Popen([str(job / 'ApplyUpdate.exe'), str(self._root.resolve()), str(os.getpid()), str(stamp)], cwd=job, creationflags=subprocess.CREATE_NO_WINDOW)
+            self._allow_close = True
+            webview.windows[0].destroy()
+
     def choose_folder(self):
         import webview
         result = webview.windows[0].create_file_dialog(webview.FileDialog.FOLDER)
@@ -131,6 +193,8 @@ class DesktopApi:
                       'scan_sync': self._scan_sync, 'sync': self._sync, 'reset_legacy': self._reset_legacy, 'role_meta': self._role_meta,
                       'remove_roles': self._remove_roles, 'restore_role': self._restore_role, 'single_start': self._single_start, 'plan_order': self._plan_order, 'finish_close': self._finish_close, 'role_view': self._role_view, 'close_plan': self._close_plan, 'start_member': self._start_member, 'member_view': self._member_view, 'proxy_save': self._proxy_save, 'proxy_delete': self._proxy_delete, 'laoyu_restore': self._laoyu_restore, 'proxy_test': self._proxy_test, 'proxy_bind': self._proxy_bind, 'proxy_trial_start': self._proxy_trial_start, 'proxy_backend': self._proxy_backend, 'laoyu_probe': self._laoyu_probe, 'laoyu_sync': self._laoyu_sync, 'proxy_dns_test': self._proxy_dns_test, 'launch_preflight': self._launch_preflight}
         try:
+            if self._updating:
+                raise ValueError('正在准备更新，请完成或取消更新后再操作。')
             if action not in operations:
                 raise ValueError('不支持的操作')
             if action in ('proxy_test', 'proxy_dns_test', 'laoyu_probe', 'laoyu_sync', 'detect_game', 'device_check'):

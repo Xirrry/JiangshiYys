@@ -14,7 +14,7 @@ assert not any('site-packages' in p or 'Python312' in p for p in sys.path)
 import yys_core
 modules=['app','desktop_api','business','cache_import','close_guard','game_preferences','game_discovery','profile_cleanup',
          'laoyu_controller','laoyu_support','launcher_workspace','pinganzhi_sync','proxy_dns','proxy_support',
-         'app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
+         'single_instance','app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
 for name in modules:
     module=importlib.import_module('yys_core.'+name)
     assert hasattr(module,'__compiled__'),name
@@ -88,3 +88,11 @@ assert api.update('settings', {'auto_check': False})['ok']
 assert api.update('startup')['data']['auto_check'] is False
 assert not api.update('arbitrary')['ok']
 print('PASS: compiled update bridge and preferences; no network requested')
+
+assert (root/'ApplyUpdate.exe').is_file()
+assert not api.update('install', {})['ok']
+from yys_core import single_instance
+instance=single_instance.Instance('Local\\JiangshiYys-compiled-selftest-'+str(__import__('os').getpid()))
+assert not instance.duplicate
+instance.close()
+print('PASS: compiled singleton, native helper presence and explicit install confirmation guard')

@@ -10,6 +10,13 @@ BRAND = json.loads((ROOT / 'brand.json').read_text(encoding='utf-8'))
 
 
 def main():
+    import single_instance
+    global _instance
+    _instance = single_instance.Instance()
+    if _instance.duplicate:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(None, '启动器已经打开，请使用已有窗口。不同版本或目录也只允许打开一个。', BRAND['name'], 0x40)
+        return
     import msvcrt
     def stage(name):
         (ROOT / 'desktop-stage.txt').write_text(name, encoding='utf-8')
