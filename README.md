@@ -4,6 +4,10 @@
 
 Windows 阴阳师桌面版角色启动工具，使用 Python、Vue 3 与 WebView2。
 
+## 思路由来
+
+本软件的设计思路受 [平安志](https://member.xlhome.de5.net) 启发，感谢平安志带来的灵感。
+
 ## 下载与运行
 
 在 [Releases](https://github.com/Xirrry/JiangshiYys/releases) 下载 Windows x64 完整包，解压后运行「僵尸痒痒鼠.exe」。需要 WebView2 Runtime 和已安装的游戏客户端。使用说明内置于软件，也可阅读仓库中的 [用户使用手册](用户使用手册.md)。
