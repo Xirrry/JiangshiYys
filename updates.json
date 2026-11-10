@@ -1,5 +1,37 @@
 [
   {
+    "tag_name": "v9.50-experimental",
+    "prerelease": true,
+    "draft": false,
+    "body": "## 僵尸痒痒鼠 v9.50 测试版\r\n\r\n### 自动安装与单例\r\n\r\n- 新增「下载并安装」和「安装并重启」，要求先保存方案、关闭游戏与代理会话。\r\n- 安装前重新核对 SHA-256、压缩路径、版本、运行文件和空间，等待旧进程退出后由独立原生助手切换。\r\n- 保持软件原路径，data 整体移动保留，不重复复制角色缓存、不删除个人数据。建议提前自行备份 data。\r\n- 旧代码保留在同级 `.JiangshiYys-update-随机编号/backup`；切换或新版启动失败会尝试恢复旧版。45 秒未确认就绪则保留现场，需人工检查；不保证能恢复所有环境故障。\r\n- 同一 Windows 登录会话内，不同目录和版本的 v9.50 及以后启动器只允许打开一个。\r\n\r\n### 更新界面\r\n\r\n- 独立「软件更新」入口，显示上次成功检查的时间和来源。\r\n- 下载百分比、已下载大小、平均速度和取消下载。\r\n- 区分限流、超时、磁盘空间不足、写入权限及校验失败。\r\n\r\n**v9.49 及以前没有安装助手，第一次换成 v9.50 仍需手动解压；之后支持自动安装。** 你可以先在 v9.49 测试检查和下载，再按内置手册备份、迁移 data。\r\n\r\n跨进程单例、安装前保护、更新/错误场景、编译后隔离自检，以及样例目录中的真实原生切换、保留 data 和失败恢复测试通过。未对用户实际安装执行自动升级，等待用户实机测试；未做商业代码签名。\r\n\r\n**IP 代理和设备功能未经完整测试，不保证可行性、兼容性和稳定性。** 检测通过不代表所有流量已代理，设备功能不保证形成独立硬件身份。\r\n\r\nWindows x64，需要 WebView2 Runtime 与已安装的游戏客户端。完整解压后运行「僵尸痒痒鼠.exe」。\r\n\r\n作者：昔乃｜QQ：3499049029｜邮箱：xiryy@qq.com\r\n\r\nSHA-256：`8492acc15b99a9e6a1686c8f328996259ac3cf2a61f0247615e0c4b77fabed7b`\r\n",
+    "assets": [
+      {
+        "name": "JiangshiYys-9.50-experimental-win-x64.zip",
+        "size": 22284098,
+        "digest": "sha256:8492acc15b99a9e6a1686c8f328996259ac3cf2a61f0247615e0c4b77fabed7b",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.50-experimental/JiangshiYys-9.50-experimental-win-x64.zip"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 109,
+        "digest": "sha256:6118618c2e2edbd55129a2ce32b45c9ac142e16f769f957271466bfbd2600982",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.50-experimental/SHA256SUMS.txt"
+      },
+      {
+        "name": "User-Manual.html",
+        "size": 33753,
+        "digest": "sha256:1952b5a16f5cc805c0e08bf24341c3b4181802d9f9d0af16f1c42443c686bb3d",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.50-experimental/User-Manual.html"
+      },
+      {
+        "name": "User-Manual.md",
+        "size": 27351,
+        "digest": "sha256:75ae27b78cf8076ff985bf3be1e806dea3f9d816efbeeb53599229a6603d101c",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.50-experimental/User-Manual.md"
+      }
+    ]
+  },
+  {
     "tag_name": "v9.49-experimental",
     "prerelease": true,
     "draft": false,
