@@ -1,5 +1,37 @@
 [
   {
+    "tag_name": "v9.52-experimental",
+    "prerelease": true,
+    "draft": false,
+    "body": "## 僵尸痒痒鼠 v9.52 · 保留抗锯齿设置\r\n\r\n最低画质预设不再修改抗锯齿参数 msaa 与 msaa_switch。全局、角色和方案的最低画质均保留游戏当前的抗锯齿开关与档位，游戏已开启的会保留开启。\r\n\r\n**如果旧版已经关闭某个角色的抗锯齿，请在游戏设置中开启一次，新版之后不会再次关闭。** 本版不强制修改当前正在运行的游戏。其余静音、登录动画和低画质设置按原配置生效。\r\n\r\n已验证开启、关闭、自定义档位与字段缺失均原样保留；全局/角色/方案继承回归、前端构建和编译后隔离自检通过。\r\n\r\n保留 v9.51 的 data 迁移资源链接修复，以及 v9.50 的自动安装、旧版备份、失败恢复与跨目录单例。升级前先保存方案、关闭游戏与代理会话，并备份 data；v9.49 及更早版本首次进入新版本仍需手动解压。\r\n\r\n**IP 代理与设备功能未经完整测试，不保证可行性、兼容性或稳定性。**\r\n\r\n作者：昔乃｜QQ：3499049029｜邮箱：xiryy@qq.com\r\n\r\nSHA-256：`c99e4664a96ef9437f595f8c47ff391915a4b51b7f1f0a022a6c9cc1fe03cc09`\r\n",
+    "assets": [
+      {
+        "name": "JiangshiYys-9.52-experimental-win-x64.zip",
+        "size": 22286700,
+        "digest": "sha256:c99e4664a96ef9437f595f8c47ff391915a4b51b7f1f0a022a6c9cc1fe03cc09",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.52-experimental/JiangshiYys-9.52-experimental-win-x64.zip"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 109,
+        "digest": "sha256:56d050270668a8a52382031beb2becb58cffe38df3deb4d828c83d9b2ca18e89",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.52-experimental/SHA256SUMS.txt"
+      },
+      {
+        "name": "User-Manual.html",
+        "size": 35030,
+        "digest": "sha256:0d47a162b3b152802a7e418f684519025951cf87f9429d922bd483922ca45163",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.52-experimental/User-Manual.html"
+      },
+      {
+        "name": "User-Manual.md",
+        "size": 28603,
+        "digest": "sha256:6a3a158e65beabe0e9f8c52bd164ef3907ccee6756e580234f8818675b5243f0",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.52-experimental/User-Manual.md"
+      }
+    ]
+  },
+  {
     "tag_name": "v9.51-experimental",
     "prerelease": true,
     "draft": false,
