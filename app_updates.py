@@ -12,6 +12,7 @@ import urllib.request
 REPO = 'Xirrry/JiangshiYys'
 API = 'https://api.github.com/repos/' + REPO + '/releases?per_page=30'
 PAGE = 'https://github.com/' + REPO + '/releases'
+MANIFEST = 'https://raw.githubusercontent.com/' + REPO + '/main/updates.json'
 LIMIT = 256 * 1024 * 1024
 
 
@@ -26,6 +27,8 @@ def trusted_url(url):
     u = urllib.parse.urlsplit(url)
     if u.scheme != 'https' or u.username or u.password or u.port not in (None, 443):
         raise ValueError('更新地址不可信')
+    if url == MANIFEST:
+        return url
     if u.hostname == 'api.github.com' and u.path.startswith('/repos/' + REPO + '/releases'):
         return url
     if u.hostname == 'github.com' and u.path.startswith('/' + REPO + '/releases'):
@@ -124,13 +127,22 @@ class UpdateManager:
     def _work(self, action):
         try:
             if action == 'check':
-                with fetch(API) as response:
-                    content = response.read(2 * 1024 * 1024 + 1)
-                if len(content) > 2 * 1024 * 1024:
-                    raise ValueError('版本信息过大')
-                rows = json.loads(content)
-                if not isinstance(rows, list):
-                    raise ValueError('版本信息格式异常')
+                rows = None
+                for source in (MANIFEST, API):
+                    try:
+                        with fetch(source) as response:
+                            content = response.read(2 * 1024 * 1024 + 1)
+                        if len(content) > 2 * 1024 * 1024:
+                            raise ValueError('版本信息过大')
+                        candidate = json.loads(content)
+                        if not isinstance(candidate, list):
+                            raise ValueError('版本信息格式异常')
+                        rows = candidate
+                        break
+                    except Exception:
+                        continue
+                if rows is None:
+                    raise ValueError('无法读取版本信息')
                 release = select_release(rows, self.brand['version'], self.brand.get('release_channel') == 'experimental')
                 self._set(phase='available' if release else 'latest', release=release,
                           message='发现新版本' if release else '当前已是本更新通道的最新版本')

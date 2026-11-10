@@ -23,3 +23,7 @@ MinHook 1.3.4 保留 BSD 许可。本组件仅供明确选择的自有角色实�
 release_tools/compile_core.py 使用 Nuitka 模块模式编译第一方 Python；需先将 Nuitka 及其构建依赖安装至 release_tools/build_deps。release_tools/build_binary_release.py 根据编译结果与前端构建资产生成独立发行目录，并执行隔离自检。
 
 这些脚本包含开发机器构建目录约定。独立重建时应检查 Visual Studio、CPython 及第三方许可文件路径；本仓库未声明异机一键构建已经验证。不要从带个人 data 的运行目录直接打包。
+
+## 发布更新清单
+
+GitHub Release 附件上传且校验后，执行 `python release_tools/update_feed.py` 生成 updates.json，检查并提交到 main。脚本需要已登录的官方 gh CLI；该凭证不会包含在公开清单中。软件优先读取公开清单，避免匿名 API 共享出口限流。

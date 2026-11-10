@@ -62,3 +62,11 @@ with patch.object(api._updates, 'start') as start:
 assert not api.update('arbitrary')['ok']
 assert not api.update('folder')['ok']
 print('PASS: version channels, trusted URLs, digest requirement, verified download, corrupt/failed network, nonblocking guard, settings, bridge; no user data or game touched')
+
+manager = u.UpdateManager(root / 'fallback', brand)
+with patch.object(u, 'fetch', side_effect=[OSError('raw unavailable'), io.BytesIO(json.dumps([row()]).encode())]) as mocked:
+    manager._work('check')
+    assert mocked.call_args_list[0].args == (u.MANIFEST,)
+    assert mocked.call_args_list[1].args == (u.API,)
+assert manager.status()['phase'] == 'available'
+print('PASS: public manifest and API fallback')
