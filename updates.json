@@ -1,5 +1,25 @@
 [
   {
+    "tag_name": "v9.54-experimental",
+    "prerelease": true,
+    "draft": false,
+    "body": "# v9.54 方案修复、同步完善与统一设置页\r\n\r\n- 修复已有方案修改名称后生成新方案的问题，保留排序，拒绝同名覆盖。\r\n- 同步平安志当前账号模式的分组和关联排列方案，转换窗口尺寸及坐标；相同缓存跳过复制，重复方案复用，仅补齐新增成员，保留本地修改。\r\n- 普通游戏窗口运行时允许安装更新，仅要求结束软件代理会话；启动任务未完成时仍阻止安装。\r\n- 工具与设置合为一页，包含游戏目录、运行记录、使用说明、软件更新和关于作者。\r\n- 调整蓝票六视图、常用弹窗的字号与文字对比度，保留分页与紧凑布局。\r\n\r\n## 下载与升级\r\n\r\n下载 Windows x64 ZIP 并解压运行 EXE。升级前保存方案并备份 data。注意：旧版更新器的限制由旧版本执行，如当前旧版提示关闭游戏，首次升级仍需遵循该提示；升级后采用新规则。\r\n\r\n设备和代理功能继续属于实验功能，不保证可行性或兼容性。测试覆盖隔离数据下的方案重命名、同步去重、更新检查和多尺寸前端布局；未做跨电脑游戏实测。\r\n",
+    "assets": [
+      {
+        "name": "JiangshiYys-9.54-experimental-win-x64.zip",
+        "size": 25999442,
+        "digest": "sha256:55a12f376ea42677eebcc0997c661bbf7ab6d6334d78dbc6edabaedd1e17d95c",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.54-experimental/JiangshiYys-9.54-experimental-win-x64.zip"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 109,
+        "digest": "sha256:67b233257dcea08418e0cbaab9517895a0ac18e155e3856d0f6d3d0aa3d6e0ce",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.54-experimental/SHA256SUMS.txt"
+      }
+    ]
+  },
+  {
     "tag_name": "v9.53-experimental",
     "prerelease": true,
     "draft": false,
