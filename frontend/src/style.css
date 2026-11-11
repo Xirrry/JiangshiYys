@@ -722,3 +722,18 @@ input[type=checkbox] { accent-color: #826449; }
 .about-update-shortcut,.update-version-line,.update-progress-meta{display:flex;align-items:center;justify-content:space-between;gap:12px}.about-update-shortcut{border-top:1px solid #e5d7c4;margin-top:16px;padding-top:14px}.update-version-line{margin-bottom:16px}.update-version-line span,.update-progress-meta{font-size:12px;color:#88745f}.update-progress-meta{margin:6px 0 12px}.update-state{padding:10px 12px;background:#f4eee3;border-radius:6px}.update-state[data-phase="downloaded"],.update-state[data-phase="latest"]{color:#3f795f;background:#edf4ed}.modal .app-update{border-top:0;margin-top:0;padding-top:0}.app-update .update-notes{max-height:230px}
 
 .shell .main.blue-page{display:flex;flex-direction:column;padding:0;min-height:0;height:100%;overflow:hidden}
+
+/* Shared readable typography for workspace, dialogs and settings. */
+.shell{font-family:"Microsoft YaHei UI","Microsoft YaHei","Segoe UI",sans-serif;font-synthesis:none}
+.shell input,.shell select,.shell textarea,.shell button{font-family:inherit}
+.shell .hint,.shell .field-label,.shell .modal p,.shell .modal small,.shell .status,.shell .member-status,.shell .role-cell-note,.shell .all-logs,.shell .sync-table,.shell .sync-table small,.shell .game-pref-options small{font-size:13px;line-height:1.6}
+.shell .hint,.shell .field-label,.shell .role-cell-note{color:#746650}
+.shell .modal input,.shell .modal select,.shell .modal textarea{font-size:14px}
+.shell .settings-inline{position:absolute;inset:0 0 0 168px;margin:0;padding:22px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:16px;background:var(--paper);backdrop-filter:none;z-index:5;overflow:hidden}
+.settings-page-header{flex:none}.settings-page-header h1{margin:0;font-size:24px}.settings-page-header p{margin:5px 0 0;font-size:13px;color:#746650}
+.settings-tabs{display:flex;gap:8px;flex-wrap:wrap;flex:none;border-bottom:1px solid var(--line);padding-bottom:12px}
+.settings-tabs button{font-size:14px;padding:9px 16px}.settings-tabs button.active{background:#ece1ce;border-color:#c4ac89;color:#593f29;font-weight:600}
+.shell .settings-inline>.modal,.shell .settings-inline>.modal.wide,.shell .settings-inline>.modal.manual-dialog{width:100%;max-width:none;max-height:none;min-height:0;flex:1;overflow:auto;border-radius:9px;padding:22px;box-shadow:none}
+.settings-inline>.modal>header{margin-bottom:18px}.settings-inline>.modal>header .eyebrow{display:none}
+.settings-inline .about-content{max-width:900px}.settings-inline .all-logs{max-height:none}.settings-inline .manual-content{max-height:none}
+@media(max-width:1200px){.shell .settings-inline{left:158px;padding:18px}}

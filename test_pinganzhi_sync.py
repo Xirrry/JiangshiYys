@@ -69,3 +69,48 @@ assert not hasattr(cache_import, 'locate_source')
 assert not hasattr(cache_import, 'import_selected')
 print('PASS: selected Pinganzhi account only, other accounts untouched, source preserved, running-source refusal, recycle/unready excluded, original-game import removed.')
 print('Artifacts:', test)
+
+# Workspace import: stable source identifiers, partial selections and local edits.
+workspace = source.parent / 'desktop-multi'
+workspace.mkdir()
+file = workspace / 'Config.json'
+config = {'accountDefaultWindowCount':2,'profiles':[{'launchMode':'account','windowCount':2,'state':{
+    'windows':[{'id':'w1','groupName':'来源分组'},{'id':'w2','groupName':'来源分组'}],
+    'layoutPresets':[{'id':'preset1','name':'来源方案','layout':{'columns':2,'mode':'grid'},
+        'windows':[{'id':'w1','autoStart':True,'width':640,'height':360}, {'id':'w2','autoStart':True}]}]}}]}
+file.write_text(json.dumps(config),encoding='utf-8')
+selected['meta']['windowId']='w1'
+cfg={'accounts':[role],'pending':[],'layout_plans':{}}
+assert pinganzhi_sync.merge_workspace(cfg,source,{'first':selected})==1
+assert role['group']=='来源分组'
+plan=cfg['layout_plans']['来源方案'];assert plan['roles']==[role['id']]
+assert plan['windows'][role['id']]['width']==640
+plan['launch_delay']=5;role['group']='本地分组'
+assert pinganzhi_sync.merge_workspace(cfg,source,{'first':selected})==0
+assert len(cfg['layout_plans'])==1 and plan['launch_delay']==5 and role['group']=='本地分组'
+second=next(x for x in sources if x['meta']['id']=='second');second['meta']['windowId']='w2'
+cfg['accounts'].append({'id':'local-second','pinganzhi_source_id':'second','pinganzhi_source_root':str(source.resolve())})
+assert pinganzhi_sync.merge_workspace(cfg,source,{'first':selected,'second':second})==0
+assert plan['roles']==[role['id'],'local-second']
+# Same-name local scheme is not overwritten by a different source preset.
+config['profiles'][0]['state']['layoutPresets'][0]['id']='preset2'
+config['profiles'][0]['state']['layoutPresets'][0]['windows'][0]['width']=800
+file.write_text(json.dumps(config),encoding='utf-8')
+assert pinganzhi_sync.merge_workspace(cfg,source,{'first':selected,'second':second})==1
+assert len(cfg['layout_plans'])==2 and plan['launch_delay']==5
+assert pinganzhi_sync.merge_workspace(cfg,source,{'first':selected,'second':second})==0
+assert pinganzhi_sync.cache_digest(selected['cache'],selected['config_file'])==pinganzhi_sync.cache_digest(cache,profile/'game/Documents/clientconfig')
+# Repeat sync must not allocate another cache directory or change role identity.
+import desktop_api
+from unittest.mock import patch
+bridge=desktop_api.DesktopApi(test/'bridge')
+bridge._sources={'first':selected}
+repeat={'game':str(game),'accounts':[role],'pending':[]}
+with patch.object(bridge,'_config',return_value=repeat), patch.object(bridge,'_save'), patch.object(bridge._app,'find_game',return_value=(game,game/'bin/onmyoji.exe')), \
+     patch.object(bridge,'_running',return_value=False), patch.object(bridge,'_state',return_value={}), \
+     patch.object(bridge._app,'account_folder',return_value=profile), \
+     patch.object(pinganzhi_sync,'ensure_source_idle'), \
+     patch.object(pinganzhi_sync,'sync_account',side_effect=AssertionError('duplicate cache allocation')):
+    result=bridge._sync({'ids':['first','first']})
+    assert len(result)==1 and result[0]['skipped'] and result[0]['role']==role['id']
+print('PASS: account groups and presets, repeat source/content deduplication, partial-member supplementation, local edit preservation, same-name conflict safety and unchanged-cache skip.')

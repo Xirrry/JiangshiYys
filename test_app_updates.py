@@ -116,6 +116,17 @@ rel.update(size=archive.stat().st_size,sha256=hashlib.sha256(archive.read_bytes(
 manager.state.update(phase='downloaded',path=str(archive));jobs.clear();manager._work('install')
 assert manager.status()['phase']=='error' and not jobs
 assert not (root/'escape.txt').exists()
+# Ordinary game/device windows and dormant proxy bindings do not block updates.
+with patch.object(api, '_roles', return_value=[{'id':'live','proxy_id':'saved-only'}]), \
+     patch.object(api, '_state', side_effect=AssertionError('ordinary games must not be probed')), \
+     patch.object(api, '_device_session_alive', side_effect=AssertionError('device sessions must not block')), \
+     patch.object(api, '_proxy_routes', return_value={'live':{'active':False}}):
+    api._check_update_idle()
+for provider in ('builtin','laoyu'):
+    with patch.object(api, '_proxy_routes', return_value={'live':{'active':True,'provider':provider}}):
+        try: api._check_update_idle()
+        except ValueError as error: assert '使用软件代理' in str(error)
+        else: raise AssertionError('active proxy session allowed through installer')
 # Install requires explicit confirmation and refuses active launch operations.
 assert not api.update('install',{})['ok']
 api._launch_status={'a':{'phase':'starting'}}

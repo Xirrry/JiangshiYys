@@ -50,6 +50,20 @@ try:
     assert stored['layout_plans']['方案A']['windows']['a']['width'] == 320
     assert stored['layout_plans']['方案B']['windows']['a']['width'] == 800
     assert len(stored['accounts']) == 2
+    # Renaming updates the same plan, preserving its list slot and all settings.
+    call('plan_order', {'names': ['方案B', '两开方案', '方案A']})
+    before = api.snapshot()['config']['layout_plans']['方案B']
+    call('save_plan', {**p, 'name':'  改名B  ', 'old_name':'方案B', 'profiles':before['windows']})
+    renamed = api.snapshot()['config']
+    assert len(renamed['layout_plans']) == 3 and '方案B' not in renamed['layout_plans']
+    assert renamed['plan_order'] == ['改名B', '两开方案', '方案A']
+    assert renamed['layout_plans']['改名B']['roles'] == before['roles']
+    assert renamed['layout_plans']['改名B']['windows'] == before['windows']
+    for old, name in [('改名B','方案A'), ('missing','新名字'), ('','方案A')]:
+        snapshot = (root/'data/accounts.json').read_bytes()
+        assert not api.command('save_plan', {**p,'old_name':old,'name':name})['ok']
+        assert snapshot == (root/'data/accounts.json').read_bytes()
+    call('save_plan', {**p, 'name':'方案B', 'old_name':'改名B', 'profiles':before['windows']})
     call('delete_plan', {'name': '方案A'})
     stored = api.snapshot()['config']
     assert len(stored['accounts']) == 2

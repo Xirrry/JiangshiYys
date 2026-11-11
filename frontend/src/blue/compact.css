@@ -13,3 +13,35 @@ main>.blue-tools>label{display:inline-flex;flex-direction:row;align-items:center
 .character-calendar .day:not(.recorded)>small{display:none}.character-calendar .day.daily-day{display:grid;grid-template-columns:1fr;grid-template-rows:12px minmax(0,1fr);row-gap:1px;align-items:center}.character-calendar .daily-day>.day-total{grid-row:2;justify-self:center}.character-calendar .daily-day>small{display:none}.character-calendar .day.xiajian-day{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);grid-template-rows:12px minmax(0,1fr);gap:1px;align-items:center}.character-calendar .xiajian-day>.day-total{grid-row:2;grid-column:1;justify-self:center}.character-calendar .xiajian-day>small{grid-row:2;grid-column:2;justify-self:center}.character-calendar .xiajian-day .reward-pair{gap:2px;flex-wrap:nowrap}.character-calendar .xiajian-day .reward-item{gap:1px;font-size:9px}.character-calendar .xiajian-day .reward-unit{font-size:7px}.character-calendar .xiajian-day .reward-art{width:11px;height:11px}.character-calendar .kind-label{max-width:calc(100% - 22px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 #rarity-legend{display:none!important}#status:empty{display:none}.blue-help-legend{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;margin:12px 0}.blue-help-legend>span:last-child{flex-basis:100%;line-height:1.7;color:#8a7966}
+
+/* Native-size text: retain pagination rather than scale the page. */
+html,body{font-family:"Microsoft YaHei UI","Microsoft YaHei","Segoe UI",sans-serif;font-synthesis:none;text-size-adjust:100%;-webkit-text-size-adjust:100%}
+body{font-size:14px;color:#293a32}
+button,input,select,textarea{font-family:inherit}
+.tools>label,.tools .muted,.tabs button,.blue-layout-help,.week-number,.week-controls,.pager,.pager button,.pager select,.pager-controls label,.table-wrap table,.table-wrap th{font-size:12px}
+#status{font-size:12px;line-height:18px;min-height:18px}
+.role-label{font-size:13px;line-height:1.5;font-weight:500}
+.week-table th{font-size:12px;color:#52615a}
+.week-table th small{font-size:12px;color:#64718a}
+.week-table .role-column{width:140px}
+.week-table .summary-column{width:145px}
+.week-cell{grid-template-rows:16px 22px 1fr}
+.week-cell .drop-type,.week-cell .drop-footer,.week-cell .drop-state{font-size:12px;line-height:16px}
+.weekly-total,.weekly-total small{font-size:12px;line-height:16px}
+.weekly-total .pill{font-size:11px}
+.muted,.hint{color:#66756d}
+.week-cell button{font-size:13px}
+.table-wrap td{font-size:13px}
+.week-title strong{font-size:14px}
+
+.week-cell.empty-cell{font-size:13px;color:#65758c}
+
+/* Calendar and statistics share the same minimum readable text sizes. */
+.metric>span,.metric small,.source-line,#stats-total-details>p,.period-info,.period-controls label,.calendar-person h3,.character-calendar .weekday,.character-calendar .day>.muted{font-size:12px;line-height:16px}
+.metric{padding:9px 10px}.metric small{color:#66756d}
+.character-calendar .day>span:first-child{font-size:12px;line-height:14px}
+.character-calendar .day small,.character-calendar .reward-item,.character-calendar .xiajian-day .reward-item{font-size:11px;line-height:14px}
+.character-calendar .kind-label{font-size:11px!important;line-height:14px}
+.character-calendar .daily-day,.character-calendar .xiajian-day{grid-template-rows:14px minmax(0,1fr)}
+.character-calendar .xiajian-day .reward-unit{font-size:10px}
+.bar-label,.bar-value{font-size:11px}.character-calendar .day:not(.recorded){color:#526358}

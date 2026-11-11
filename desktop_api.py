@@ -101,7 +101,7 @@ class DesktopApi:
                     elif route.get('phase')=='cancelled':
                         self._launch_status[key]={**self._launch_status.get(key,{}),'phase':'cancelled','error':''}
             return {'config': cfg, 'states': states, 'devices': devices, 'screens': window_layout.screens(), 'logs': self._logs,
-                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v9.53', 'source_root': str(pinganzhi_sync.default_root())}
+                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v9.54', 'source_root': str(pinganzhi_sync.default_root())}
 
     def update(self, action='status', payload=None):
         try:
@@ -142,27 +142,10 @@ class DesktopApi:
                 raise
 
     def _check_update_idle(self):
-        for role in self._roles():
-            state = self._state(role['id'])
-            # Treat inaccessible/reused tracked processes conservatively.
-            if state.get('pid'):
-                import ctypes
-                from ctypes import wintypes
-                kernel = ctypes.WinDLL('kernel32', use_last_error=True)
-                kernel.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
-                kernel.OpenProcess.restype = wintypes.HANDLE
-                kernel.CloseHandle.argtypes = [wintypes.HANDLE]
-                process = kernel.OpenProcess(0x1000, False, int(state['pid']))
-                if process:
-                    kernel.CloseHandle(process)
-                    actual = self._app.process_stamp(int(state['pid']))
-                    if actual and state.get('stamp') and actual != state['stamp']:
-                        continue
-                    raise ValueError('请先关闭所有已启动的游戏窗口，再安装更新。')
-                if ctypes.get_last_error() != 87:
-                    raise ValueError('无法确认游戏已经退出，请退出游戏后重试。')
-        if any(x.get('active') for x in self._proxy_routes().values()) or any(self._device_session_alive(k) for k in self._device_sessions):
-            raise ValueError('请先结束游戏及代理会话，再安装更新。')
+        # Ordinary game windows survive a launcher update; only proxy controllers
+        # depend on the launcher installation and must be released first.
+        if any(x.get('active') for x in self._proxy_routes().values()):
+            raise ValueError('请先关闭使用软件代理的游戏窗口或取消代理启动，再安装更新；普通游戏窗口无需关闭。')
         if any(x.get('phase') in ('starting', 'requesting', 'queued') for x in self._launch_status.values()):
             raise ValueError('启动操作尚未结束，请稍后再安装。')
 
@@ -434,10 +417,24 @@ class DesktopApi:
         if not name:
             raise ValueError('请填写方案名称')
         cfg = self._config()
-        cfg.setdefault('layout_plans', {})[name] = {'settings': p['settings'], 'roles': p['ids'],
+        plans = cfg.setdefault('layout_plans', {})
+        old_name = str(p.get('old_name') or '').strip()
+        if old_name and old_name not in plans:
+            raise ValueError('原方案已不存在，请刷新后重试')
+        if old_name != name and name in plans and 'old_name' in p:
+            raise ValueError('已有同名方案，请使用其他名称')
+        saved = {**plans.get(old_name or name, {}), 'settings': p['settings'], 'roles': p['ids'],
             'windows': {key: value for key, value in p.get('profiles', {}).items() if key in p['ids']}, 'screen_device': p.get('screen'), 'auto': bool(p.get('auto')), 'launch_delay': self._launch_delay(p.get('launch_delay', 0)), 'game_preferences':game_preferences.overrides(p.get('game_preferences'))}
+        if old_name and old_name != name:
+            cfg['layout_plans'] = {name if key == old_name else key: saved if key == old_name else value
+                                   for key, value in plans.items()}
+            cfg['plan_order'] = list(dict.fromkeys(name if key == old_name else key
+                for key in cfg.get('plan_order', list(plans)) if key in plans))
+        else:
+            plans[name] = saved
         self._save(cfg)
         self._note(f'已保存排列方案：{name}')
+        return name
 
     def _plan_order(self, p):
         cfg = self._config()
@@ -1119,9 +1116,16 @@ class DesktopApi:
         game, exe = self._app.find_game(cfg['game'])
         servers = self._app.read_json(ROOT / 'servers.json', {})['servers']
         results = []
-        for key in p['ids']:
+        for key in dict.fromkeys(p['ids']):
             try:
                 source = self._sources[key]
+                pinganzhi_sync.safe_directory(source['directory'])
+                meta_file = source['directory'] / 'account.json'
+                if meta_file.is_symlink():
+                    raise ValueError('账号资料不能是链接')
+                source['meta'] = json.loads(meta_file.read_text(encoding='utf-8-sig'))
+                if source['meta'].get('id') != key or source['meta'].get('recycled') or not source['meta'].get('ready'):
+                    raise ValueError('来源账号已变化，请刷新列表')
                 matches = [a for a in cfg['accounts']+cfg['pending'] if a.get('pinganzhi_source_id') == key
                            and (not a.get('pinganzhi_source_root') or
                                 Path(a['pinganzhi_source_root']).resolve() == source['directory'].parent.resolve())]
@@ -1130,6 +1134,16 @@ class DesktopApi:
                 old = matches[0] if matches else None
                 if old and self._running(self._state(old['id'])):
                     raise ValueError('目标角色仍在运行，请先退出游戏再更新')
+                if old:
+                    pinganzhi_sync.ensure_source_idle(source['meta'])
+                    folder = self._app.account_folder(self._app.DATA / 'profiles', old['id'])
+                    try:
+                        same = pinganzhi_sync.cache_digest(source['cache'], source['config_file']) == pinganzhi_sync.cache_digest(folder / 'AppData/Roaming/Netease/Mpay', folder / 'game/Documents/clientconfig')
+                    except OSError:
+                        same = False
+                    if same:
+                        results.append({'id':key,'role':old['id'],'skipped':True})
+                        continue
                 role, count = pinganzhi_sync.sync_account(self._app.prepare, self._app.DATA / 'profiles', game, source, servers)
                 if old is None and role.get('short_id') and role.get('server_id'):
                     matches = [a for a in cfg['accounts']+cfg['pending'] if
@@ -1146,6 +1160,13 @@ class DesktopApi:
                 results.append({'id': key, 'role': role['id']})
             except (OSError, ValueError, KeyError) as error:
                 results.append({'id': key, 'error': str(error)})
+        roots = {str(self._sources[r['id']]['directory'].parent) for r in results if not r.get('error')}
+        for root in roots:
+            try:
+                pinganzhi_sync.merge_workspace(cfg, root, self._sources)
+                self._save(cfg)
+            except (OSError, ValueError, TypeError, KeyError) as error:
+                results.append({'error':f'分组方案同步失败：{error}'})
         return results
 
     def _reset_legacy(self, p):
