@@ -1,5 +1,31 @@
 [
   {
+    "tag_name": "v9.53-experimental",
+    "prerelease": true,
+    "draft": false,
+    "body": "## v9.53\r\n\r\n- 新增本地蓝票记录：自选参与角色、周视图、每日录入、月历、明细、趋势与统计。\r\n- 移植网页风格角色战报，支持周报、月报、自选日期，分页预览、PNG 下载与复制图片，保留 CSV/JSON 导出。\r\n- 增加记录修改历史与并发冲突保护；退出参与名单后保留历史。\r\n- 精简页面，稀有度图例与本地保存提示移入“说明”。\r\n- 设备和 IP 代理入口默认隐藏；在“关于与作者”页 5 秒内点击版本号 7 次，可在本次运行中显示或隐藏。已有配置仍生效。\r\n\r\n### 下载与升级\r\n下载 JiangshiYys-9.53-experimental-win-x64.zip，解压后运行“僵尸痒痒鼠.exe”。旧版可在软件内检查更新。升级前保存方案、退出游戏并备份 data；手动升级时将旧 data 移入新版目录。\r\n\r\n蓝票记录仅保存在本地，不含订单关联，也不会读取网页数据。IP 代理与设备功能未经完整测试，不保证可行性或兼容性。本版本继续沿用实验通道。\r\n\r\n验证：前端构建、蓝票界面与导出回归、原生核心与便携包运行时自检通过；尚未进行跨电脑游戏实测。\r\n",
+    "assets": [
+      {
+        "name": "default.md",
+        "size": 31441,
+        "digest": "sha256:31c976fa6945f4b09390cc851f0ec558663122fcbcd98fc9204ada6d5ce4931e",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.53-experimental/default.md"
+      },
+      {
+        "name": "JiangshiYys-9.53-experimental-win-x64.zip",
+        "size": 25976931,
+        "digest": "sha256:0f20ea5356bcae12d8c8740dbdb6852964d396c69a06edf901904128072f7942",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.53-experimental/JiangshiYys-9.53-experimental-win-x64.zip"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 109,
+        "digest": "sha256:d3a22f8f6c1049d9024a91fcfac0998d56f0545700b3c951f3f39c41d780a740",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.53-experimental/SHA256SUMS.txt"
+      }
+    ]
+  },
+  {
     "tag_name": "v9.52-experimental",
     "prerelease": true,
     "draft": false,
