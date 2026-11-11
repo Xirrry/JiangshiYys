@@ -21,6 +21,7 @@ import game_discovery
 import profile_cleanup
 import device_identity
 import app_updates
+import blue_tickets
 
 ROOT = Path(__file__).resolve().parent
 
@@ -46,6 +47,7 @@ class DesktopApi:
         self._updating = False
         self._updates.install_callback = self._complete_update
         self._updates.install_failed = self._update_failed
+        self._blue = blue_tickets.BlueStore(self._root)
         self._allow_close = False
         self._proxies = proxy_support.ProxyStore(self._root)
         self._note('Vue 桌面版已就绪，原有角色、分组和排列方案已保留。')
@@ -99,7 +101,7 @@ class DesktopApi:
                     elif route.get('phase')=='cancelled':
                         self._launch_status[key]={**self._launch_status.get(key,{}),'phase':'cancelled','error':''}
             return {'config': cfg, 'states': states, 'devices': devices, 'screens': window_layout.screens(), 'logs': self._logs,
-                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v9.52', 'source_root': str(pinganzhi_sync.default_root())}
+                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v9.53', 'source_root': str(pinganzhi_sync.default_root())}
 
     def update(self, action='status', payload=None):
         try:
@@ -179,6 +181,54 @@ class DesktopApi:
             subprocess.Popen([str(job / 'ApplyUpdate.exe'), str(self._root.resolve()), str(os.getpid()), str(stamp)], cwd=job, creationflags=subprocess.CREATE_NO_WINDOW)
             self._allow_close = True
             webview.windows[0].destroy()
+
+    def blue_records(self, action='load', payload=None):
+        try:
+            p = payload or {}
+            with self._lock:
+                if self._updating:
+                    raise ValueError('正在安装更新，请稍后再试')
+                roles = copy.deepcopy(self._roles())
+                if action == 'load':
+                    data = self._blue.load(roles)
+                elif action == 'subjects':
+                    data = self._blue.subjects(p.get('ids'), p.get('revision'), roles)
+                elif action == 'save':
+                    data = self._blue.save(p.get('rows'), p.get('revision'), p.get('allow_replace', False), roles)
+                elif action == 'history':
+                    data = self._blue.history(p.get('role_id'), p.get('date'))
+                else:
+                    raise ValueError('不支持的蓝票操作')
+                return {'ok': True, 'data': data}
+        except Exception as error:
+            return {'ok': False, 'error': str(error)}
+
+    def blue_export(self, payload):
+        try:
+            import base64
+            import webview
+            kind = payload.get('kind')
+            if kind not in ('json', 'csv', 'png'):
+                raise ValueError('导出格式无效')
+            content = payload.get('content')
+            if not isinstance(content, str) or len(content) > 24 * 1024 * 1024:
+                raise ValueError('导出内容过大')
+            raw = base64.b64decode(content, validate=True) if kind == 'png' else content.encode('utf-8-sig' if kind == 'csv' else 'utf-8')
+            if kind == 'png' and not raw.startswith(bytes.fromhex('89504e470d0a1a0a')):
+                raise ValueError('图片格式无效')
+            filename = payload.get('filename', '蓝票记录.' + kind)
+            if not isinstance(filename, str) or len(filename)>180 or not filename.endswith('.'+kind) or any(c in filename for c in '/\\:*?\"<>|') or any(ord(c)<32 for c in filename):
+                raise ValueError('导出文件名无效')
+            file = webview.windows[0].create_file_dialog(webview.FileDialog.SAVE, save_filename=filename)
+            if not file:
+                return {'ok': True, 'data': {'cancelled': True}}
+            target = Path(file[0] if isinstance(file, (list, tuple)) else file)
+            if target.is_symlink() or target.is_junction():
+                raise ValueError('导出目标不能是链接')
+            target.write_bytes(raw)
+            return {'ok': True, 'data': {'cancelled': False}}
+        except Exception as error:
+            return {'ok': False, 'error': str(error)}
 
     def choose_folder(self):
         import webview

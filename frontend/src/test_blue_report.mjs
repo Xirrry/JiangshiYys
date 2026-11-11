@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {weekRange,monthRange,reportModel,reportFileName,attemptText} from './blue/report-model.js';
+assert.deepEqual(weekRange('2026-11-08'),{from:'2026-11-02',to:'2026-11-08'});
+assert.deepEqual(monthRange('2024-02'),{from:'2024-02-01',to:'2024-02-29'});assert.equal(monthRange('2026-13'),null);assert.equal(weekRange('2026-02-30'),null);
+const records=[{role_id:'a',date:'2026-11-02',mode:'daily',first:0,second:2},{role_id:'a',date:'2026-11-03',mode:'daily',first:null,second:null,firstState:'unknown',secondState:'not_played'},{role_id:'a',date:'2026-11-06',mode:'xiajian',blue:3,fragments:0,eggs:1},{role_id:'b',date:'2026-11-02',mode:'daily',first:100,second:100}];
+const model=reportModel({id:'a',label:'角色A',server:'一区'},records,'2026-11-02','2026-11-08','2026-11-11');
+assert.equal(model.total,5);assert.equal(model.dojo,2);assert.equal(model.xiajian,3);assert.equal(model.fragments,0);assert.equal(model.eggs,1);assert.equal(model.days,7);assert.equal(model.recorded,3);assert.equal(model.missing,4);assert.equal(model.pending,0);assert.equal(model.unknown,1);assert.equal(model.missed,1);assert.equal(model.luckAverage,101);assert.equal(attemptText(records[1],'first'),'未知');assert.equal(attemptText(records[1],'second'),'未打');
+assert.equal(reportModel({id:'empty',label:'空角色'},records,'2026-11-02','2026-11-08','2026-11-04').total,null);
+assert.equal(reportModel({id:'empty',label:'空角色'},records,'2026-11-02','2026-11-08','2026-11-04').missing,3);
+assert.throws(()=>reportModel({id:'a'},[...records,records[0]],'2026-11-02','2026-11-08','2026-11-11'),/重复/);
+assert.throws(()=>reportModel({id:'a'},records,'2026-11-09','2026-11-02','2026-11-11'),/有效/);
+assert.throws(()=>reportModel({id:'a'},records,'2025-01-01','2026-01-02','2026-11-11'),/366/);
+assert.ok(!JSON.stringify(model).includes('boss'));assert.ok(!JSON.stringify(model).includes('order'));
+assert.equal(reportFileName('A/B','月报','2026-10-01','2026-10-31',2,2),'A_B-月报-2026-10-01至2026-10-31-第2张.png');
+console.log('PASS: role-only report ranges, zero/unknown/missed/future, full-period totals, duplicate refusal, no associations and safe filenames');

@@ -14,7 +14,7 @@ assert not any('site-packages' in p or 'Python312' in p for p in sys.path)
 import yys_core
 modules=['app','desktop_api','business','cache_import','close_guard','game_preferences','game_discovery','profile_cleanup',
          'laoyu_controller','laoyu_support','launcher_workspace','pinganzhi_sync','proxy_dns','proxy_support',
-         'single_instance','app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
+         'blue_tickets','single_instance','app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
 for name in modules:
     module=importlib.import_module('yys_core.'+name)
     assert hasattr(module,'__compiled__'),name
@@ -96,3 +96,22 @@ instance=single_instance.Instance('Local\\JiangshiYys-compiled-selftest-'+str(__
 assert not instance.duplicate
 instance.close()
 print('PASS: compiled singleton, native helper presence and explicit install confirmation guard')
+
+cfg=api._config();cfg['accounts']=[{'id':'blue-fixture','nickname':'blue-fixture','confirmed':True}];cfg['pending']=[];api._save(cfg)
+blue=api.blue_records('load')
+assert blue['ok'] and not blue['data']['records'] and not any(r['selected'] for r in blue['data']['roles'])
+blue_role=api._roles()[0]['id']
+blue=api.blue_records('subjects',{'ids':[blue_role],'revision':blue['data']['revision']})
+assert blue['ok']
+blue=api.blue_records('save',{'revision':blue['data']['revision'],'rows':[{'role_id':blue_role,'date':'2026-10-30','mode':'daily','first':0,'second':None,'firstState':'recorded','secondState':'unknown','note':'compiled-fixture'}]})
+assert blue['ok'] and blue['data']['records'][0]['first']==0 and blue['data']['records'][0]['second'] is None
+assert len(api.blue_records('history',{'role_id':blue_role,'date':'2026-10-30'})['data'])==1
+assert not api.blue_records('orders')['ok']
+print('PASS: compiled local blue ledger, opt-in subjects, persisted zero/unknown, history and no business endpoints; no network')
+
+export_target=fixture/'blue-fixture-export.csv'
+with patch.object(webview,'windows',[Mock(create_file_dialog=Mock(return_value=(str(export_target),)))]):
+    assert api.blue_export({'kind':'csv','content':'role,date,first\nfixture,2026-10-30,0'})['ok']
+assert export_target.read_bytes().startswith(bytes.fromhex('efbbbf'))
+assert not api.blue_export({'kind':'png','content':'bm90LXBpbmc='})['ok']
+print('PASS: compiled export bridge writes selected fixture only and rejects invalid PNG')

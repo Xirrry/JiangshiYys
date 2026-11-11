@@ -33,7 +33,9 @@ def main():
     compiled=json.loads((ROOT/'release_tools/latest-compiled.json').read_text(encoding='utf-8'))
     batch=ROOT/'releases'/('v'+VERSION+'-binary-'+time.strftime('%Y%m%d-%H%M%S'));batch.mkdir(parents=True,exist_ok=False)
     channel=json.loads((ROOT/'brand.json').read_text(encoding='utf-8')).get('release_channel','stable')
-    package=batch/('JiangshiYys-'+VERSION+('-experimental' if channel=='experimental' else '')+'-win-x64');package.mkdir()
+    local_build=json.loads((ROOT/'brand.json').read_text(encoding='utf-8')).get('local_build',False)
+    suffix='-local-test' if local_build else '-experimental' if channel=='experimental' else ''
+    package=batch/('JiangshiYys-'+VERSION+suffix+'-win-x64');package.mkdir()
     for name in ['brand.json','servers.json','用户使用手册.md','用户使用手册.html','运行环境说明.md','发布说明.md','第三方组件说明.md']:
         copy(ROOT/name,package/name)
     copy(Path(compiled['binary']),package/'yys_core.pyd')
@@ -131,7 +133,7 @@ def main():
     digest=hashlib.sha256(archive.read_bytes()).hexdigest()
     (batch/'SHA256SUMS.txt').write_text(digest+'  '+archive.name+'\n',encoding='ascii')
     report={'version':VERSION,'package':str(package),'zip':str(archive),'sha256':digest,'zip_bytes':archive.stat().st_size,
-            'release_channel':channel,'core_modules_compiled':compiled['modules'],'plaintext_application_sources':False,'user_data_included':False,
+            'release_channel':channel,'local_build':local_build,'core_modules_compiled':compiled['modules'],'plaintext_application_sources':False,'user_data_included':False,
             'binary_smoke':'passed','ui_smoke':'pending','public_upload':'not performed','cross_machine_game_test':'not performed'}
     (batch/'release-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
     (ROOT/'release_tools/latest-binary-release.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
