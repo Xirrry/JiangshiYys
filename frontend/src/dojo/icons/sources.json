@@ -1,0 +1,83 @@
+{
+  "repository": "https://gitee.com/tigerdonotcry/yys-analysis",
+  "assets": [
+    {
+      "file": "coin.png",
+      "source": "src/assets/item-icons/coin.png",
+      "tag": "v0.1.0-beta.8",
+      "sha256": "e7c83d0b30d74201bd72c742b318e58e51e16d0c9e4bf74f41bd7c5242c09984"
+    },
+    {
+      "file": "contrib.png",
+      "source": "src/assets/item-icons/contrib.png",
+      "tag": "v0.1.0-beta.8",
+      "sha256": "a521143439dd7f203a97db55c9087ef1404ae4ad1edbea836d90aafbdf94ebfd"
+    },
+    {
+      "file": "medal.png",
+      "source": "src/assets/item-icons/medal.png",
+      "tag": "v0.1.0-beta.8",
+      "sha256": "b5d1ccbf2ddd009f1e409ddd79159fc883b725add4782effeea150045753e1f8"
+    },
+    {
+      "file": "mystery_amulet.png",
+      "source": "src/assets/item-icons/mystery_amulet.png",
+      "tag": "v0.1.0-beta.8",
+      "sha256": "b201e0cc27ad5990a4dd2eb63edfbec202941ca9f19b5fdcad1f12d473cd4b01"
+    },
+    {
+      "file": "200001.png",
+      "source": "src/assets/realm-card-icons/200001.png",
+      "tag": "v0.1.0-beta.8",
+      "sha256": "0fcd42e66a20783526cb3ff72f6fea994d999324d1d76b90f84b93d046d216bd"
+    },
+    {
+      "file": "200002.png",
+      "source": "src/assets/realm-card-icons/200002.png",
+      "tag": "v0.1.0-beta.8",
+      "sha256": "0fcd42e66a20783526cb3ff72f6fea994d999324d1d76b90f84b93d046d216bd"
+    },
+    {
+      "file": "200003.png",
+      "source": "src/assets/realm-card-icons/200003.png",
+      "tag": "v0.1.0-beta.8",
+      "sha256": "0fcd42e66a20783526cb3ff72f6fea994d999324d1d76b90f84b93d046d216bd"
+    },
+    {
+      "file": "200004.png",
+      "source": "src/assets/realm-card-icons/200004.png",
+      "tag": "v0.1.0-beta.8",
+      "sha256": "0fcd42e66a20783526cb3ff72f6fea994d999324d1d76b90f84b93d046d216bd"
+    },
+    {
+      "file": "200005.png",
+      "source": "src/assets/realm-card-icons/200005.png",
+      "tag": "v0.1.0-beta.8",
+      "sha256": "0fcd42e66a20783526cb3ff72f6fea994d999324d1d76b90f84b93d046d216bd"
+    },
+    {
+      "file": "200006.png",
+      "source": "src/assets/realm-card-icons/200006.png",
+      "tag": "v0.1.0-beta.8",
+      "sha256": "0fcd42e66a20783526cb3ff72f6fea994d999324d1d76b90f84b93d046d216bd"
+    },
+    {
+      "file": "broken_amulet.png",
+      "source": "user-provided game screenshot",
+      "processing": "Original-pixel foreground segmentation, subpixel alpha edge and background fringe removal; frame/quantity excluded",
+      "sha256": "9dd4817ef22f75231497c4bcafd668b117bc766f6c3a9adcadd2451e3d7b3423"
+    },
+    {
+      "file": "hyakki_ticket.png",
+      "source": "user-provided game screenshot",
+      "processing": "Original-pixel foreground segmentation, subpixel alpha edge and background fringe removal; frame/quantity excluded",
+      "sha256": "2aa65dd2c3786e1f12e32a36cdc31bc802413cbfd1420d73c1cb37e012a49d26"
+    },
+    {
+      "file": "daruma_contract.png",
+      "source": "user-provided game screenshot",
+      "processing": "Original-pixel foreground segmentation, subpixel alpha edge and background fringe removal; frame/quantity excluded",
+      "sha256": "9e20fecc88a14fe8990b0c5820f6a91e989d78fef91188c764958f750b8040a4"
+    }
+  ]
+}

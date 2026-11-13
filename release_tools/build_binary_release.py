@@ -36,9 +36,10 @@ def main():
     local_build=json.loads((ROOT/'brand.json').read_text(encoding='utf-8')).get('local_build',False)
     suffix='-local-test' if local_build else '-experimental' if channel=='experimental' else ''
     package=batch/('JiangshiYys-'+VERSION+suffix+'-win-x64');package.mkdir()
-    for name in ['brand.json','servers.json','用户使用手册.md','用户使用手册.html','运行环境说明.md','发布说明.md','第三方组件说明.md']:
+    for name in ['brand.json','servers.json','server-merges.json','官方合区关系说明.md','用户使用手册.md','用户使用手册.html','运行环境说明.md','发布说明.md','第三方组件说明.md']:
         copy(ROOT/name,package/name)
     copy(Path(compiled['binary']),package/'yys_core.pyd')
+    copy(ROOT/'hardware/mail-reader/mail_agent.dll',package/'hardware/mail-reader/mail_agent.dll')
     copy(ROOT/'hardware/IdentityView.dll',package/'hardware/IdentityView.dll')
     copy(ROOT/'hardware/MinHook-LICENSE.txt',package/'hardware/MinHook-LICENSE.txt')
     for name in ['app-icon.png','app-icon.ico']:copy(ROOT/'assets'/name,package/'assets'/name)
@@ -113,7 +114,7 @@ def main():
     # Test an exact copy; distributable directory must remain pristine.
     smoke=batch/'smoke-test/app';shutil.copytree(package,smoke)
     test=ROOT/'release_tools/test_compiled_release.py'
-    result=subprocess.run([str(smoke/'runtime/python.exe'),'-B','-c',test.read_text(encoding='utf-8')],cwd=smoke,capture_output=True,text=True,encoding='utf-8')
+    result=subprocess.run([str(smoke/'runtime/python.exe'),'-B','-c',test.read_text(encoding='utf-8')],cwd=smoke,capture_output=True,text=True,encoding='utf-8',errors='replace')
     (batch/'binary-smoke.txt').write_text(result.stdout+result.stderr,encoding='utf-8')
     if result.returncode:raise RuntimeError('Compiled runtime self-test failed; inspect binary-smoke.txt')
     if subprocess.run([str(package/'僵尸痒痒鼠.exe'),'--check']).returncode:raise RuntimeError('EXE prerequisites failed')

@@ -14,7 +14,7 @@ assert not any('site-packages' in p or 'Python312' in p for p in sys.path)
 import yys_core
 modules=['app','desktop_api','business','cache_import','close_guard','game_preferences','game_discovery','profile_cleanup',
          'laoyu_controller','laoyu_support','launcher_workspace','pinganzhi_sync','proxy_dns','proxy_support',
-         'blue_tickets','single_instance','app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
+         'blue_tickets','mail_reader','server_merges','single_instance','app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
 for name in modules:
     module=importlib.import_module('yys_core.'+name)
     assert hasattr(module,'__compiled__'),name
@@ -115,3 +115,8 @@ with patch.object(webview,'windows',[Mock(create_file_dialog=Mock(return_value=(
 assert export_target.read_bytes().startswith(bytes.fromhex('efbbbf'))
 assert not api.blue_export({'kind':'png','content':'bm90LXBpbmc='})['ok']
 print('PASS: compiled export bridge writes selected fixture only and rejects invalid PNG')
+
+from yys_core import server_merges
+assert server_merges.ROOT==root and server_merges.same_server('10001','10003')
+assert callable(api.running_windows)
+print('PASS: bundled official server equivalence and runtime-window API')

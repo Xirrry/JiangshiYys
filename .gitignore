@@ -21,3 +21,8 @@ release_tools/github-cli/
 experiments/**/build/
 experiments/**/result-*.json
 update-downloads/
+
+research/
+experiments/event-inventory-*/
+experiments/mail-read-*/
+release_tools/pending-github-release.json

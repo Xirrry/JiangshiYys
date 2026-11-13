@@ -22,6 +22,7 @@ import profile_cleanup
 import device_identity
 import app_updates
 import blue_tickets
+import mail_reader
 
 ROOT = Path(__file__).resolve().parent
 
@@ -43,6 +44,8 @@ class DesktopApi:
         self._launch_status = {}
         self._cleanup_plans = {}
         self._device_sessions = {}
+        self._mail_reading = False
+        self._mail_batch_progress = {'active':False}
         self._updates = app_updates.UpdateManager(self._root, json.loads((ROOT / "brand.json").read_text(encoding="utf-8")))
         self._updating = False
         self._updates.install_callback = self._complete_update
@@ -142,6 +145,8 @@ class DesktopApi:
                 raise
 
     def _check_update_idle(self):
+        if self._mail_reading:
+            raise ValueError('请等待邮件读取结束后再更新')
         # Ordinary game windows survive a launcher update; only proxy controllers
         # depend on the launcher installation and must be released first.
         if any(x.get('active') for x in self._proxy_routes().values()):
@@ -165,6 +170,47 @@ class DesktopApi:
             self._allow_close = True
             webview.windows[0].destroy()
 
+    def running_windows(self, action='list', payload=None):
+        p=payload or {}
+        try:
+            with self._lock:
+                if self._updating:raise ValueError('正在安装更新，请稍后再试')
+                rows=window_layout.running_game_windows(role_reader.game_pids(),self._app.process_stamp)
+                screens=window_layout.screens()
+                if action=='list':return {'ok':True,'data':{'windows':rows,'screens':screens}}
+                selected=p.get('windows',[])
+                if not isinstance(selected,list) or not selected or len(selected)>200:raise ValueError('请先选择运行窗口')
+                known={r['id']:r for r in rows};ids=[r['id'] for r in selected]
+                if len(ids)!=len(set(ids)) or any(k not in known for k in ids):raise ValueError('窗口已退出或变化，请刷新后重新选择')
+                states={k:{'pid':known[k]['pid'],'stamp':int(known[k]['stamp'])} for k in ids}
+                if action=='focus':
+                    window_layout.act(states[ids[0]],self._app.process_stamp,focus=True)
+                    return {'ok':True,'data':{}}
+                if action not in ('preview','apply'):raise ValueError('不支持的窗口操作')
+                screen=next((r for r in screens if r['id']==p.get('screen')),None)
+                if not screen:raise ValueError('目标屏幕已变化，请刷新')
+                settings=p.get('settings',{})
+                opts={k:int(settings.get(k,v)) for k,v in [('width',960),('height',540),('columns',3),('gap',8),('padding',8)]}
+                if not 160<=opts['width']<=16384 or not 90<=opts['height']<=16384 or not 1<=opts['columns']<=50 or any(not 0<=opts[k]<=1000 for k in ('gap','padding')):raise ValueError('排列参数超出范围')
+                opts.update(aspect=bool(settings.get('aspect',True)),mode=settings.get('mode','网格排列'))
+                if opts['mode'] not in ('网格排列','错落排列','自定义坐标'):raise ValueError('排列模式无效')
+                frames=[window_layout.border(states[k],self._app.process_stamp) for k in ids]
+                frame=(max(f[0] for f in frames),max(f[1] for f in frames))
+                profiles=p.get('profiles',{}) if opts['mode']=='自定义坐标' else {}
+                rects=window_layout.profile_rectangles(ids,screen['work'],profiles,frame=frame,**opts)
+                if action=='preview':return {'ok':True,'data':{'work':screen['work'],'rects':rects,'frame':frame}}
+                results=[]
+                for key in ids:
+                    try:
+                        # Revalidate identity just before each window action.
+                        hwnd=window_layout.guarded_window(states[key],self._app.process_stamp)
+                        u=window_layout.api();u.IsIconic.argtypes=[window_layout.W.HWND];u.IsZoomed.argtypes=[window_layout.W.HWND];u.ShowWindow.argtypes=[window_layout.W.HWND,window_layout.C.c_int]
+                        if u.IsIconic(hwnd) or u.IsZoomed(hwnd):u.ShowWindow(hwnd,9)
+                        window_layout.act(states[key],self._app.process_stamp,rectangle=rects[key]);results.append({'id':key,'ok':True})
+                    except Exception as error:results.append({'id':key,'ok':False,'error':str(error)})
+                return {'ok':True,'data':{'results':results}}
+        except Exception as error:return {'ok':False,'error':str(error)}
+
     def blue_records(self, action='load', payload=None):
         try:
             p = payload or {}
@@ -173,7 +219,9 @@ class DesktopApi:
                     raise ValueError('正在安装更新，请稍后再试')
                 roles = copy.deepcopy(self._roles())
                 if action == 'load':
-                    data = self._blue.load(roles)
+                    data = self._blue.sync_mail_blue(None,roles)['snapshot']
+                elif action == 'sync_mail':
+                    data = self._blue.sync_mail_blue(p.get('revision'),roles)
                 elif action == 'subjects':
                     data = self._blue.subjects(p.get('ids'), p.get('revision'), roles)
                 elif action == 'save':
@@ -185,6 +233,101 @@ class DesktopApi:
                 return {'ok': True, 'data': data}
         except Exception as error:
             return {'ok': False, 'error': str(error)}
+
+    def _mail_bound_role(self, envelope, pid, stamp):
+        identity=envelope.get('role',{})
+        roles=self._roles()
+        exact=[r for r in roles if str(r.get('short_id'))==str(identity.get('short_id'))
+               and str(r.get('server_id'))==str(identity.get('server_id'))]
+        if len(exact)==1:return exact[0]['id']
+        if len(exact)>1:raise ValueError('存在重复的已绑定角色，请先整理重复记录')
+        # Merged servers can expose a physical server different from the login zone.
+        # Accept only a tracked, creation-time-matched window whose own fresh login
+        # configuration confirms the saved role. Never match by nickname alone.
+        verified=[]
+        servers=self._app.read_json(ROOT/'servers.json',{})['servers']
+        for role in roles:
+            if not role.get('confirmed') or str(role.get('short_id'))!=str(identity.get('short_id')):continue
+            state=self._state(role['id'])
+            if state.get('pid')!=pid or state.get('stamp')!=stamp:continue
+            config=self._app.account_folder(self._app.DATA/'profiles',role['id'])/'game/Documents/clientconfig'
+            try:
+                current=role_reader.read_identity(pid,stamp,self._app.process_stamp,config,servers)
+            except (OSError,ValueError):continue
+            if (str(current['short_id'])==str(identity.get('short_id'))
+                    and str(current['server_id'])==str(role.get('server_id'))
+                    and current['nickname']==identity.get('nickname')):
+                verified.append(role['id'])
+        if len(verified)!=1:
+            raise ValueError('当前窗口无法与已确认角色唯一对应；请使用启动器启动该角色，并进入庭院后重试')
+        return verified[0]
+
+    def _mail_server_name(self, envelope):
+        identity=envelope.get('role',{})
+        catalog=self._app.read_json(ROOT/'servers.json',{}).get('servers',[])
+        identity['server']=next((s['name'] for s in catalog if str(s['id'])==str(identity.get('server_id'))),'区服名称待识别')
+        return envelope
+
+    def _read_all_mail(self, p):
+        with self._lock:
+            if self._updating:raise ValueError('正在安装更新，请稍后再试')
+            if p.get('confirm') is not True:raise ValueError('请确认临时只读读取')
+            if self._mail_reading:raise ValueError('邮件读取正在进行，请稍后再试')
+            snapshot=self._blue.mail_archives(self._roles())
+            if p.get('revision')!=snapshot['revision']:raise ValueError('记录已变化，请刷新后重试')
+            targets=[(pid,self._app.process_stamp(pid)) for pid in sorted(role_reader.game_pids())]
+            self._mail_reading=True
+            self._mail_batch_progress={'active':True,'done':0,'total':len(targets),'label':'准备读取'}
+        results=[];revision=snapshot['revision']
+        try:
+            for index,(pid,stamp) in enumerate(targets):
+                with self._lock:self._mail_batch_progress.update(done=index,label=f'窗口 {index+1} / {len(targets)}')
+                try:
+                    if not stamp or self._app.process_stamp(pid)!=stamp:raise ValueError('窗口已退出或进程已变化')
+                    envelope=self._mail_server_name(mail_reader.read(pid,stamp,self._app.process_stamp,ROOT/'hardware/mail-reader/mail_agent.dll'))
+                    with self._lock:
+                        current=self._blue.mail_archives(self._roles())
+                        if current['revision']!=revision:raise ValueError('记录被其他操作修改，请刷新后重试')
+                        result=self._blue.import_mail(envelope,revision,self._roles(),project_blue=True,standalone=True)
+                    revision=result['snapshot']['revision']
+                    results.append({'pid':pid,'label':result['label'],'ok':True,'added':result['added'],'duplicates':result['duplicates'],'loaded_count':result['loaded_count'],'warnings':result['warnings']})
+                except Exception as error:results.append({'pid':pid,'ok':False,'error':str(error)})
+                with self._lock:self._mail_batch_progress['done']=index+1
+            with self._lock:snapshot=self._blue.mail_archives(self._roles())
+            return {'results':results,'snapshot':snapshot,'added':sum(r.get('added',0) for r in results),'duplicates':sum(r.get('duplicates',0) for r in results),'succeeded':sum(bool(r['ok']) for r in results),'failed':sum(not r['ok'] for r in results)}
+        finally:
+            with self._lock:
+                self._mail_reading=False
+                self._mail_batch_progress.update(active=False)
+
+    def blue_mail(self, action='list', payload=None):
+        p=payload or {}
+        try:
+            if action=='read_all':return {'ok':True,'data':self._read_all_mail(p)}
+            with self._lock:
+                if self._updating:raise ValueError('正在安装更新，请稍后再试')
+                if action=='status':return {'ok':True,'data':copy.deepcopy(self._mail_batch_progress)}
+                if action=='archives':return {'ok':True,'data':self._blue.mail_archives(self._roles())}
+                if action=='records':return {'ok':True,'data':self._blue.mail_records(self._roles())}
+                if action=='list':
+                    rows=[]
+                    for pid in sorted(role_reader.game_pids()):
+                        stamp=self._app.process_stamp(pid)
+                        if stamp:rows.append({'pid':pid,'stamp':str(stamp)})
+                    return {'ok':True,'data':rows}
+                if action!='read' or p.get('confirm') is not True:raise ValueError('请确认临时只读读取')
+                if self._mail_reading:raise ValueError('邮件读取正在进行，请稍后再试')
+                pid=int(p.get('pid',0));stamp=self._app.process_stamp(pid)
+                if pid not in role_reader.game_pids() or not stamp or str(stamp)!=str(p.get('stamp')):raise ValueError('游戏窗口已变化，请刷新')
+                self._mail_reading=True
+            try:
+                envelope=self._mail_server_name(mail_reader.read(pid,stamp,self._app.process_stamp,ROOT/'hardware/mail-reader/mail_agent.dll'))
+                with self._lock:
+                    result=self._blue.import_mail(envelope,p.get('revision'),self._roles(),project_blue=True,standalone=True)
+                return {'ok':True,'data':result}
+            finally:
+                with self._lock:self._mail_reading=False
+        except Exception as error:return {'ok':False,'error':str(error)}
 
     def blue_export(self, payload):
         try:

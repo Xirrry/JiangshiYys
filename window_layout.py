@@ -54,6 +54,35 @@ def api():
     return u
 
 
+def visible_bounds(hwnd, u=None):
+    """DWM visible frame in the caller's physical-pixel coordinate space.
+
+    GetWindowRect includes invisible resize borders. Fall back conservatively on
+    legacy/non-per-monitor-DPI callers instead of mixing virtualized coordinates.
+    """
+    u=u or api();outer=W.RECT()
+    if not u.GetWindowRect(hwnd,C.byref(outer)):raise C.WinError(C.get_last_error())
+    try:
+        context=u.GetThreadDpiAwarenessContext;context.argtypes=[];context.restype=W.HANDLE
+        awareness=u.GetAwarenessFromDpiAwarenessContext;awareness.argtypes=[W.HANDLE];awareness.restype=C.c_int
+        if awareness(context())!=2:return outer,outer
+        dwm=C.WinDLL('dwmapi',use_last_error=True)
+        query=dwm.DwmGetWindowAttribute;query.argtypes=[W.HWND,W.DWORD,C.c_void_p,W.DWORD];query.restype=C.c_long
+        visible=W.RECT()
+        if query(hwnd,9,C.byref(visible),C.sizeof(visible))!=0:return outer,outer
+        margins=(visible.left-outer.left,visible.top-outer.top,outer.right-visible.right,outer.bottom-visible.bottom)
+        if visible.right<=visible.left or visible.bottom<=visible.top or any(v<0 or v>64 for v in margins):return outer,outer
+        return outer,visible
+    except (AttributeError,OSError):return outer,outer
+
+
+def outer_for_visible(rectangle, outer, visible):
+    x,y,width,height=map(int,rectangle)
+    left,top=visible.left-outer.left,visible.top-outer.top
+    right,bottom=outer.right-visible.right,outer.bottom-visible.bottom
+    return (x-left,y-top,width+left+right,height+top+bottom)
+
+
 def profile_rectangles(keys, work, profiles, frame=(0, 0), **settings):
     """One shared calculation for preview and apply; heterogeneous rows never overlap."""
     if not keys:
@@ -171,12 +200,13 @@ def act(state, stamp_fn, *, rectangle=None, title=None, close=False, focus=False
             raise ValueError('窗口已找到，但系统暂不允许置前，请点击游戏任务栏图标')
     if title is not None and not u.SetWindowTextW(hwnd, title):
         raise C.WinError(C.get_last_error())
-    if rectangle is not None and not u.SetWindowPos(hwnd, None, *map(int, rectangle), 0x14):
-        raise C.WinError(C.get_last_error())
+    if rectangle is not None:
+        outer,visible=visible_bounds(hwnd,u)
+        native=outer_for_visible(rectangle,outer,visible)
+        if not u.SetWindowPos(hwnd,None,*native,0x14):raise C.WinError(C.get_last_error())
     if close and not u.PostMessageW(hwnd, 0x10, 0, 0):
         raise C.WinError(C.get_last_error())
-    rect = W.RECT()
-    u.GetWindowRect(hwnd, C.byref(rect))
+    _,rect=visible_bounds(hwnd,u)
     return (rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top)
 
 
@@ -184,9 +214,9 @@ def border(state, stamp_fn):
     hwnd = guarded_window(state, stamp_fn)
     outer, client = W.RECT(), W.RECT()
     u = api()
-    u.GetWindowRect(hwnd, C.byref(outer))
-    u.GetClientRect(hwnd, C.byref(client))
-    return (outer.right-outer.left-client.right, outer.bottom-outer.top-client.bottom)
+    _,visible=visible_bounds(hwnd,u)
+    u.GetClientRect(hwnd,C.byref(client))
+    return (visible.right-visible.left-client.right,visible.bottom-visible.top-client.bottom)
 
 
 
@@ -226,3 +256,31 @@ def terminate_tracked(state):
         return True
     finally:
         k.CloseHandle(handle)
+
+
+def running_game_windows(pids, stamp_fn):
+    """Read-only inventory of supported native game windows, including minimized ones."""
+    from pathlib import Path
+    k=C.WinDLL('kernel32',use_last_error=True)
+    k.OpenProcess.argtypes=[W.DWORD,W.BOOL,W.DWORD];k.OpenProcess.restype=W.HANDLE
+    k.QueryFullProcessImageNameW.argtypes=[W.HANDLE,W.DWORD,W.LPWSTR,C.POINTER(W.DWORD)]
+    k.CloseHandle.argtypes=[W.HANDLE]
+    u=api();rows=[]
+    for pid in sorted(pids):
+        try:
+            stamp=stamp_fn(pid)
+            if not stamp:continue
+            h=k.OpenProcess(0x1000,False,pid)
+            if not h:continue
+            try:
+                path=C.create_unicode_buffer(32768);length=W.DWORD(len(path))
+                if not k.QueryFullProcessImageNameW(h,0,path,C.byref(length)):continue
+                if Path(path.value).name.lower() not in {'onmyoji.exe','onmyoji_future.exe'}:continue
+            finally:k.CloseHandle(h)
+            hwnd=window_for(pid)
+            if not hwnd or stamp_fn(pid)!=stamp:continue
+            title=C.create_unicode_buffer(u.GetWindowTextLengthW(hwnd)+1);u.GetWindowTextW(hwnd,title,len(title))
+            _,rect=visible_bounds(hwnd,u)
+            rows.append({'id':str(pid)+':'+str(stamp),'pid':pid,'stamp':str(stamp),'title':title.value,'rect':[rect.left,rect.top,rect.right-rect.left,rect.bottom-rect.top]})
+        except (OSError,ValueError):continue
+    return rows
