@@ -1,5 +1,31 @@
 [
   {
+    "tag_name": "v9.56-experimental",
+    "prerelease": true,
+    "draft": false,
+    "body": "# v9.56 资源记录、每日悬赏与界面改进\r\n\r\n- 资源记录接入狭间暗域战斗、阵眼奖励补发邮件；完整读取长附件，御魂仅按星级汇总数量，重复邮件不重复累计。\r\n- 每日奖励按御魂、式神养成、式神获取、结界卡、货币分类；补齐资源图标、结界卡星级及统一视觉大小。\r\n- 固定御魂与养成资源顺序；御行达摩使用金色、御行达摩碎片与蓝票使用区分的紫色，保留其他既有排序，移除排序入口。\r\n- 邮件明细与每日弹窗改为图标卡片，支持分类展开，邮件列表每页10封；角色日报、月历、统计和周报/月报共用奖励数据。\r\n- 新增每日悬赏看板与神秘商店读取页面，支持运行窗口选择、读取及本地历史/库存记录。读取失败保留已有数据，不自动完成任务或购买商品。\r\n- 运行窗口支持实时拖动、吸附、按方案整理、反向错落与启动器按钮控制分组框。\r\n- 修复独立窗口配置误触外侧关闭的问题；启动器记住关闭时的窗口大小与最大化状态。\r\n- 更新安装暂存和旧版备份统一保留在软件目录内，个人 data 原地保留；接入 Gitee 与 GitHub 双更新源。\r\n\r\n## 下载与升级\r\n\r\n下载 Windows x64 ZIP，完整解压后运行“僵尸痒痒鼠.exe”。升级前保存方案并备份 data；普通游戏窗口可保持运行，使用软件内代理的游戏需先关闭。不要覆盖仍在运行的安装目录。\r\n\r\n读取类功能为实验功能，只读取当前客户端已加载的数据，可能需要先打开对应游戏面板。首次记录前已领取或未加载的数据无法保证补录；读取结果应与游戏界面核对。邮件发送日作为记录日期。\r\n\r\n读取使用进程内临时组件，不自动领取奖励、执行战斗或购买商品，仍存在客户端兼容性及账号处罚风险，不保证账号安全。代理与设备隔离同为实验功能。未完成跨电脑游戏兼容性测试。\r\n\r\n发行包不含账号缓存、个人记录数据库或代理凭证。\r\n",
+    "assets": [
+      {
+        "name": "JiangshiYys-9.56-experimental-win-x64.zip",
+        "size": 33028904,
+        "digest": "sha256:08601e5629f2b317a576d13e28abb8ffc6d23f543b448a0ac218c56ed8947024",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.56-experimental/JiangshiYys-9.56-experimental-win-x64.zip"
+      },
+      {
+        "name": "release-report.json",
+        "size": 780,
+        "digest": "sha256:8163de5c7330a352a6d6b606e5e4b1145d97eab2752c7981b92d2149c26df71d",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.56-experimental/release-report.json"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 109,
+        "digest": "sha256:68dfda6487c80a8b216da86ed5e5a746bb9378b7de141995fdac68a5f891e8a1",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.56-experimental/SHA256SUMS.txt"
+      }
+    ]
+  },
+  {
     "tag_name": "v9.55-experimental",
     "prerelease": true,
     "draft": false,
