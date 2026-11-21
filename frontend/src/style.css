@@ -737,3 +737,9 @@ input[type=checkbox] { accent-color: #826449; }
 .settings-inline>.modal>header{margin-bottom:18px}.settings-inline>.modal>header .eyebrow{display:none}
 .settings-inline .about-content{max-width:900px}.settings-inline .all-logs{max-height:none}.settings-inline .manual-content{max-height:none}
 @media(max-width:1200px){.shell .settings-inline{left:158px;padding:18px}}
+
+/* Sidebar: fixed icon column, aligned labels and trailing counts. */
+.sidebar .nav-item{display:flex;align-items:center;gap:10px;min-height:44px;line-height:20px}
+.sidebar .nav-item>.nav-icon{display:block;flex:0 0 18px;width:18px;height:18px;overflow:visible}
+.sidebar .nav-item>.nav-label{display:block;flex:1;min-width:0;line-height:20px}
+.sidebar .nav-item>b,.sidebar .nav-item>em{flex:none;line-height:18px}

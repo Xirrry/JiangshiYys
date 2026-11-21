@@ -50,18 +50,23 @@ def main():
     stage('bridge')
     api = DesktopApi()
     stage('create-window')
+    from close_guard import CloseGuard, WindowSizeMemory
     width, height = 1480, 980
+    available_width, available_height = 32768, 32768
     try:
         primary = __import__('window_layout').screens()[0]
         scale = ctypes.windll.user32.GetDpiForSystem() / 96
-        width = min(width, max(800, int(primary['work'][2] / scale) - 24))
-        height = min(height, max(540, int(primary['work'][3] / scale) - 24))
+        available_width = max(800, int(primary['work'][2] / scale) - 24)
+        available_height = max(540, int(primary['work'][3] / scale) - 24)
+        width = min(width, available_width)
+        height = min(height, available_height)
     except (AttributeError, OSError, IndexError):
         pass
+    minimum = (min(1120,width), min(680,height))
+    window_memory = WindowSizeMemory(ROOT / 'data/window-state.json', (width,height), (available_width,available_height), minimum)
     view = webview.create_window(BRAND['name'] + ' · v' + BRAND['version'], str(entry), js_api=api,
-                          width=width, height=height, min_size=(min(1120,width), min(680,height)), background_color='#f6f2ea',
+                          **window_memory.options, min_size=minimum, background_color='#f6f2ea',
                           text_select=False)
-    from close_guard import CloseGuard
     import threading
     def defer_close(callback):
         def run():
@@ -79,7 +84,15 @@ def main():
         if view.create_confirmation_dialog('关闭启动器', '界面尚未就绪，确认关闭启动器？'):
             api._allow_close = True
             view.destroy()
-    view.events.closing += CloseGuard(lambda: api._allow_close, defer_close, request_close)
+    close_guard = CloseGuard(lambda: api._allow_close, defer_close, request_close)
+    def on_closing():
+        accepted = close_guard()
+        if accepted:
+            window_memory.capture(view)
+        return accepted
+    view.events.closing += on_closing
+    view.events.maximized += window_memory.mark_maximized
+    view.events.restored += window_memory.mark_restored
     def on_start():
         import time, json
         stage('gui-started')
@@ -96,6 +109,7 @@ def main():
     view.events.loaded += lambda: stage('page-loaded')
     stage('starting-gui')
     webview.start(on_start, gui='edgechromium', http_server=True, debug=False, private_mode=True, icon=str(ROOT / 'assets/app-icon.ico'))
+    api.close_group_frames()
     lock.close()
 
 

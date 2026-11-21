@@ -13,6 +13,7 @@ import sys
 import pinganzhi_sync
 import role_reader
 import window_layout
+import window_groups
 import proxy_support
 import proxy_dns
 import laoyu_support
@@ -23,6 +24,8 @@ import device_identity
 import app_updates
 import blue_tickets
 import mail_reader
+import bounty_tasks
+import mystery_shop
 
 ROOT = Path(__file__).resolve().parent
 
@@ -41,10 +44,19 @@ class DesktopApi:
         self._sources = {}
         self._backed_up = False
         self._children = []
+        self._group_frames=None
+        self._window_inventory={}
+        self._regular_children=[]
+        self._regular_cancel=threading.Event()
+        self._regular_status={'active':False,'done':0,'total':0,'results':[]}
         self._launch_status = {}
         self._cleanup_plans = {}
         self._device_sessions = {}
         self._mail_reading = False
+        self._bounty_reading = False
+        self._bounty_store = None
+        self._shop_reading = False
+        self._shop_store = None
         self._mail_batch_progress = {'active':False}
         self._updates = app_updates.UpdateManager(self._root, json.loads((ROOT / "brand.json").read_text(encoding="utf-8")))
         self._updating = False
@@ -93,7 +105,7 @@ class DesktopApi:
         with self._lock:
             cfg = self._config()
             tracked = {a['id']: self._state(a['id']) for a in cfg['accounts'] + cfg['pending']}
-            states = {key:{'running':self._running(state),'pid':state.get('pid')} for key,state in tracked.items()}
+            states = {key:{'running':self._running(state),'pid':state.get('pid'),'stamp':str(state['stamp']) if state.get('stamp') else None} for key,state in tracked.items()}
             devices = self._device_summaries(tracked)
             routes = self._proxy_routes()
             bound = {a['id'] for a in cfg['accounts']+cfg['pending'] if a.get('proxy_id')}
@@ -120,6 +132,8 @@ class DesktopApi:
                 data = self._updates.settings((payload or {}).get('auto_check'))
             elif action == 'page':
                 data = self._updates.open_page()
+            elif action == 'gitee_page':
+                data = self._updates.open_page('gitee')
             elif action == 'folder':
                 data = self._updates.open_download()
             elif action == 'status':
@@ -145,8 +159,8 @@ class DesktopApi:
                 raise
 
     def _check_update_idle(self):
-        if self._mail_reading:
-            raise ValueError('请等待邮件读取结束后再更新')
+        if self._mail_reading or self._bounty_reading or self._shop_reading:
+            raise ValueError('请等待游戏数据读取结束后再更新')
         # Ordinary game windows survive a launcher update; only proxy controllers
         # depend on the launcher installation and must be released first.
         if any(x.get('active') for x in self._proxy_routes().values()):
@@ -170,19 +184,179 @@ class DesktopApi:
             self._allow_close = True
             webview.windows[0].destroy()
 
+    def regular_launch(self, action='status', payload=None):
+        """Original game directory, native environment, no identity/profile injection."""
+        p=payload or {}
+        try:
+            with self._lock:
+                if action=='status':return {'ok':True,'data':copy.deepcopy(self._regular_status)}
+                if action=='stop':
+                    self._regular_cancel.set()
+                    return {'ok':True,'data':copy.deepcopy(self._regular_status)}
+                if action!='start':raise ValueError('常规启动操作无效')
+                if self._updating:raise ValueError('正在安装更新，请稍后再试')
+                if self._regular_status['active']:raise ValueError('常规启动正在进行，请等待或停止后续启动')
+                count=p.get('count',1);delay=p.get('delay',1)
+                if type(count) is not int or not 1<=count<=20:raise ValueError('每次可打开1–20个窗口')
+                if type(delay) not in (int,float) or not 0<=delay<=60:raise ValueError('启动间隔为0–60秒')
+                game,exe=self._app.find_game(self._config().get('game',''))
+                self._regular_cancel=threading.Event();cancel=self._regular_cancel
+                self._regular_status={'active':True,'done':0,'total':count,'results':[],'stopped':False}
+                thread=threading.Thread(target=self._regular_worker,args=(game,exe,count,delay,cancel),daemon=True);thread.start()
+                return {'ok':True,'data':copy.deepcopy(self._regular_status)}
+        except Exception as error:return {'ok':False,'error':str(error)}
+
+    def _regular_worker(self, game, exe, count, delay, cancel):
+        try:
+            for index in range(count):
+                if cancel.is_set():break
+                with self._lock:
+                    if self._updating:cancel.set();break
+                    try:
+                        # Intentionally bypass prepare(), proxy/device components and role registration.
+                        child=subprocess.Popen([str(exe)],cwd=game)
+                        self._regular_children=[p for p in self._regular_children if p.poll() is None]
+                        self._regular_children.append(child)
+                        result={'index':index+1,'ok':True,'pid':child.pid}
+                        self._note('常规启动已提交第 '+str(index+1)+' 个窗口')
+                    except Exception as error:result={'index':index+1,'ok':False,'error':str(error)}
+                    self._regular_status['results'].append(result);self._regular_status['done']=index+1
+                if index<count-1 and cancel.wait(delay):break
+        finally:
+            with self._lock:
+                self._regular_status['active']=False;self._regular_status['stopped']=cancel.is_set()
+
+    def _window_groups(self, rows, cfg=None):
+        cfg=cfg or self._config();plans=cfg.get('layout_plans',{})
+        states={k:self._state(k) for plan in plans.values() for k in plan.get('roles',[])}
+        return window_groups.group_rows(rows,plans,cfg.get('plan_order',[]),states)
+
+    def _ordered_windows(self,rows):
+        ordered=[];cfg=self._config();names=list(dict.fromkeys([*cfg.get('plan_order',[]),*cfg.get('layout_plans',{})]))
+        for name,members in self._window_groups(rows,cfg):
+            index=names.index(name) if name in names else len(names)
+            for row in members:ordered.append({**row,'plan':name,'plan_color':window_groups.COLORS[index%4]})
+        return ordered
+
+    def _unified_settings(self, value=None):
+        source={**{'screen':'','columns':3,'width':960,'height':540,'gap':8,'padding':8,'new_row':True,'aspect':True},**(value or {})}
+        result={k:int(source[k]) for k in ('columns','width','height','gap','padding')}
+        if not 1<=result['columns']<=50 or not 160<=result['width']<=16384 or not 90<=result['height']<=16384 or any(not 0<=result[k]<=1000 for k in ('gap','padding')):raise ValueError('按方案排列参数超出范围')
+        result.update({k:bool(source[k]) for k in ('new_row','aspect')});result['screen']=str(source['screen'])
+        return result
+
+    def _unified_screen(self, settings):
+        screens=window_layout.screens()
+        target=next((s for s in screens if s['id']==settings['screen']),None)
+        if not target and settings['screen']:raise ValueError('统一排列的目标屏幕已断开，请重新选择屏幕')
+        if not target:target=next((s for s in screens if s['primary']),screens[0] if screens else None)
+        if not target:raise ValueError('没有可用显示器')
+        return target
+
+    def scheme_layout(self, action='status', payload=None):
+        p=payload or {}
+        try:
+            with self._lock:
+                cfg=self._config();saved=self._unified_settings(cfg.get('unified_layout'))
+                if action=='status':return {'ok':True,'data':{'settings':saved,'warning':''}}
+                if self._updating:raise ValueError('正在安装更新，请稍后再试')
+                if action=='settings':
+                    settings=self._unified_settings({**saved,**p})
+                    self._unified_screen(settings)
+                    cfg['unified_layout']=settings;self._save(cfg)
+                    return {'ok':True,'data':{'settings':settings,'warning':''}}
+                if action not in ('preview','apply'):raise ValueError('按方案排列操作无效')
+                settings=self._unified_settings({**saved,**p.get('settings',{})});target=self._unified_screen(settings)
+                rows=window_layout.running_game_windows(role_reader.game_pids(),self._app.process_stamp)
+                groups=self._window_groups(rows,cfg)
+                if not rows:raise ValueError('没有可整理的运行窗口')
+                frame=(0,0)
+                for row in rows:
+                    f=window_layout.border({'pid':row['pid'],'stamp':int(row['stamp'])},self._app.process_stamp);frame=(max(frame[0],f[0]),max(frame[1],f[1]))
+                opts={k:settings[k] for k in ('columns','width','height','gap','padding','new_row','aspect')}
+                shrunk=False
+                try:rects=window_groups.plan_blocks(groups,target['work'],frame=frame,**opts)
+                except window_groups.LayoutSpaceError:
+                    rects=window_groups.plan_blocks(groups,target['work'],frame=frame,shrink=True,**opts);shrunk=True
+                if action=='preview':return {'ok':True,'data':{'rects':rects,'shrink':shrunk,'count':len(rows),'screen':target['id'],'windows':self._ordered_windows(rows)}}
+                if shrunk and p.get('allow_shrink') is not True:raise window_groups.LayoutSpaceError('窗口空间不足，请先确认缩小后整理，或切换屏幕')
+                ordered=[r for _,members in groups for r in members]
+                self._window_inventory={r['id']:r for r in rows}
+                moved=self.running_windows('place',{'windows':ordered,'rects':rects})
+                if not moved['ok']:raise ValueError(moved['error'])
+                results=moved['data']['results']
+                self._note('已按方案顺序整理 '+str(sum(r['ok'] for r in results))+' 个窗口')
+                return {'ok':True,'data':{'results':results,'shrink':shrunk}}
+        except Exception as error:return {'ok':False,'error':str(error)}
+
+    def group_frames(self, action='status', payload=None):
+        try:
+            with self._lock:
+                if action=='status':return {'ok':True,'data':self._group_frames.status() if self._group_frames else {'visible':False,'groups':0,'error':''}}
+                if action=='hide':
+                    data=self._group_frames.command('hide') if self._group_frames else {'visible':False,'groups':0,'error':''}
+                    return {'ok':True,'data':data}
+                if action!='show':raise ValueError('分组框操作无效')
+                if self._updating:raise ValueError('正在安装更新，请稍后再试')
+                cfg=self._config();plans=cfg.get('layout_plans',{});name=(payload or {}).get('plan')
+                if name is not None and name not in plans:raise ValueError('请先保存方案，再显示分组框')
+                rows=window_layout.running_game_windows(role_reader.game_pids(),self._app.process_stamp)
+                states={key:self._state(key) for plan in plans.values() for key in plan.get('roles',[])}
+                groups=window_groups.group_rows(rows,plans,cfg.get('plan_order',[]),states,only=name)
+                if not groups:raise ValueError('没有可显示的运行窗口，请先启动'+('该方案' if name else '游戏'))
+                if self._group_frames is None or self._group_frames.stopped:self._group_frames=window_groups.GroupFrames(self._app.process_stamp)
+                return {'ok':True,'data':self._group_frames.command('show',groups)}
+        except Exception as error:return {'ok':False,'error':str(error)}
+
+    def close_group_frames(self):
+        if self._group_frames:self._group_frames.close()
+
     def running_windows(self, action='list', payload=None):
         p=payload or {}
         try:
             with self._lock:
                 if self._updating:raise ValueError('正在安装更新，请稍后再试')
-                rows=window_layout.running_game_windows(role_reader.game_pids(),self._app.process_stamp)
+                # Reuse the verified inventory while dragging; act() still checks the
+                # process creation stamp immediately before every native move.
+                selected=p.get('windows',[])
+                cache=self._window_inventory
+                if action=='place' and isinstance(selected,list) and selected and all(isinstance(w,dict) and w.get('id') in cache for w in selected):
+                    rows=list(cache.values())
+                else:
+                    rows=window_layout.running_game_windows(role_reader.game_pids(),self._app.process_stamp)
+                    self._window_inventory={row['id']:row for row in rows}
                 screens=window_layout.screens()
-                if action=='list':return {'ok':True,'data':{'windows':rows,'screens':screens}}
+                if action=='list':return {'ok':True,'data':{'windows':self._ordered_windows(rows),'screens':screens}}
                 selected=p.get('windows',[])
                 if not isinstance(selected,list) or not selected or len(selected)>200:raise ValueError('请先选择运行窗口')
                 known={r['id']:r for r in rows};ids=[r['id'] for r in selected]
                 if len(ids)!=len(set(ids)) or any(k not in known for k in ids):raise ValueError('窗口已退出或变化，请刷新后重新选择')
                 states={k:{'pid':known[k]['pid'],'stamp':int(known[k]['stamp'])} for k in ids}
+                if action=='close':
+                    if p.get('stop_regular') is True:self._regular_cancel.set()
+                    results=[]
+                    for key in ids:
+                        try:
+                            window_layout.terminate_tracked(states[key]);results.append({'id':key,'ok':True})
+                        except Exception as error:results.append({'id':key,'ok':False,'error':str(error)})
+                    return {'ok':True,'data':{'results':results}}
+                if action=='place':
+                    rects=p.get('rects',{})
+                    for key in ids:
+                        r=rects.get(key)
+                        if not isinstance(r,list) or len(r)!=4 or any(type(v) is not int for v in r) or not 160<=r[2]<=16384 or not 90<=r[3]<=16384:raise ValueError('窗口位置或尺寸无效')
+                        if not any(r[0]>=m['work'][0] and r[1]>=m['work'][1] and r[0]+r[2]<=m['work'][0]+m['work'][2] and r[1]+r[3]<=m['work'][1]+m['work'][3] for m in screens):raise ValueError('窗口超出屏幕工作区，请调整位置')
+                    results=[]
+                    for key in ids:
+                        try:
+                            hwnd=window_layout.guarded_window(states[key],self._app.process_stamp)
+                            u=window_layout.api();u.IsIconic.argtypes=[window_layout.W.HWND];u.IsZoomed.argtypes=[window_layout.W.HWND];u.ShowWindow.argtypes=[window_layout.W.HWND,window_layout.C.c_int]
+                            if u.IsIconic(hwnd) or u.IsZoomed(hwnd):u.ShowWindow(hwnd,9)
+                            window_layout.act(states[key],self._app.process_stamp,rectangle=rects[key]);
+                            if p.get('stack') is True:window_layout.raise_tracked(states[key],self._app.process_stamp)
+                            results.append({'id':key,'ok':True})
+                        except Exception as error:results.append({'id':key,'ok':False,'error':str(error)})
+                    return {'ok':True,'data':{'results':results}}
                 if action=='focus':
                     window_layout.act(states[ids[0]],self._app.process_stamp,focus=True)
                     return {'ok':True,'data':{}}
@@ -193,7 +367,7 @@ class DesktopApi:
                 opts={k:int(settings.get(k,v)) for k,v in [('width',960),('height',540),('columns',3),('gap',8),('padding',8)]}
                 if not 160<=opts['width']<=16384 or not 90<=opts['height']<=16384 or not 1<=opts['columns']<=50 or any(not 0<=opts[k]<=1000 for k in ('gap','padding')):raise ValueError('排列参数超出范围')
                 opts.update(aspect=bool(settings.get('aspect',True)),mode=settings.get('mode','网格排列'))
-                if opts['mode'] not in ('网格排列','错落排列','自定义坐标'):raise ValueError('排列模式无效')
+                if opts['mode'] not in ('网格排列','错落排列','反向错落','自定义坐标'):raise ValueError('排列模式无效')
                 frames=[window_layout.border(states[k],self._app.process_stamp) for k in ids]
                 frame=(max(f[0] for f in frames),max(f[1] for f in frames))
                 profiles=p.get('profiles',{}) if opts['mode']=='自定义坐标' else {}
@@ -206,10 +380,70 @@ class DesktopApi:
                         hwnd=window_layout.guarded_window(states[key],self._app.process_stamp)
                         u=window_layout.api();u.IsIconic.argtypes=[window_layout.W.HWND];u.IsZoomed.argtypes=[window_layout.W.HWND];u.ShowWindow.argtypes=[window_layout.W.HWND,window_layout.C.c_int]
                         if u.IsIconic(hwnd) or u.IsZoomed(hwnd):u.ShowWindow(hwnd,9)
-                        window_layout.act(states[key],self._app.process_stamp,rectangle=rects[key]);results.append({'id':key,'ok':True})
+                        window_layout.act(states[key],self._app.process_stamp,rectangle=rects[key]);
+                        if opts['mode'] in ('错落排列','反向错落'):window_layout.raise_tracked(states[key],self._app.process_stamp)
+                        results.append({'id':key,'ok':True})
                     except Exception as error:results.append({'id':key,'ok':False,'error':str(error)})
                 return {'ok':True,'data':{'results':results}}
         except Exception as error:return {'ok':False,'error':str(error)}
+
+    def bounty_tasks(self, action='history', payload=None):
+        p = payload or {}
+        reading = False
+        try:
+            with self._lock:
+                if self._updating:
+                    raise ValueError('正在安装更新，请稍后再试')
+                if self._bounty_store is None:
+                    self._bounty_store = bounty_tasks.BountyStore(self._root, self._app)
+                store = self._bounty_store
+                if action == 'read':
+                    if self._mail_reading or self._bounty_reading or self._shop_reading:
+                        raise ValueError('已有游戏数据读取任务，请等待完成')
+                    self._bounty_reading = True
+                    reading = True
+            if action == 'history':
+                return store.history(p.get('day'))
+            if action == 'windows':
+                return store.windows()
+            if action == 'read':
+                return store.read(p.get('target', 'all'))
+            raise ValueError('悬赏操作无效')
+        except Exception as error:
+            return {'ok': False, 'error': str(error)}
+        finally:
+            if reading:
+                with self._lock:
+                    self._bounty_reading = False
+
+    def mystery_shop(self, action='load', payload=None):
+        p = payload or {}
+        reading = False
+        try:
+            with self._lock:
+                if self._updating:
+                    raise ValueError('正在安装更新，请稍后再试')
+                if self._shop_store is None:
+                    self._shop_store = mystery_shop.ShopStore(self._root, self._app)
+                store = self._shop_store
+                if action == 'read':
+                    if self._mail_reading or self._bounty_reading or self._shop_reading:
+                        raise ValueError('已有游戏数据读取任务，请等待完成')
+                    self._shop_reading = True
+                    reading = True
+            if action == 'load':
+                return {'ok': True, 'data': store.load()}
+            if action == 'windows':
+                return {'ok': True, 'data': store.windows()}
+            if action == 'read':
+                return {'ok': True, 'data': store.read(p.get('target', 'all'))}
+            raise ValueError('神秘商店操作无效')
+        except Exception as error:
+            return {'ok': False, 'error': str(error)}
+        finally:
+            if reading:
+                with self._lock:
+                    self._shop_reading = False
 
     def blue_records(self, action='load', payload=None):
         try:
@@ -272,7 +506,7 @@ class DesktopApi:
         with self._lock:
             if self._updating:raise ValueError('正在安装更新，请稍后再试')
             if p.get('confirm') is not True:raise ValueError('请确认临时只读读取')
-            if self._mail_reading:raise ValueError('邮件读取正在进行，请稍后再试')
+            if self._mail_reading or self._bounty_reading or self._shop_reading:raise ValueError('已有游戏数据读取任务，请稍后再试')
             snapshot=self._blue.mail_archives(self._roles())
             if p.get('revision')!=snapshot['revision']:raise ValueError('记录已变化，请刷新后重试')
             targets=[(pid,self._app.process_stamp(pid)) for pid in sorted(role_reader.game_pids())]
@@ -311,12 +545,21 @@ class DesktopApi:
                 if action=='records':return {'ok':True,'data':self._blue.mail_records(self._roles())}
                 if action=='list':
                     rows=[]
+                    u=window_layout.api()
                     for pid in sorted(role_reader.game_pids()):
                         stamp=self._app.process_stamp(pid)
-                        if stamp:rows.append({'pid':pid,'stamp':str(stamp)})
+                        if not stamp:continue
+                        hwnd=window_layout.window_for(pid)
+                        title=''
+                        if hwnd:
+                            buffer=window_layout.C.create_unicode_buffer(u.GetWindowTextLengthW(hwnd)+1)
+                            u.GetWindowTextW(hwnd,buffer,len(buffer))
+                            title=buffer.value.strip()
+                        if self._app.process_stamp(pid)!=stamp:continue
+                        rows.append({'pid':pid,'stamp':str(stamp),'title':title or f'游戏窗口 {len(rows)+1}（标题未就绪）'})
                     return {'ok':True,'data':rows}
                 if action!='read' or p.get('confirm') is not True:raise ValueError('请确认临时只读读取')
-                if self._mail_reading:raise ValueError('邮件读取正在进行，请稍后再试')
+                if self._mail_reading or self._bounty_reading or self._shop_reading:raise ValueError('已有游戏数据读取任务，请稍后再试')
                 pid=int(p.get('pid',0));stamp=self._app.process_stamp(pid)
                 if pid not in role_reader.game_pids() or not stamp or str(stamp)!=str(p.get('stamp')):raise ValueError('游戏窗口已变化，请刷新')
                 self._mail_reading=True
@@ -611,6 +854,7 @@ class DesktopApi:
         for key in ids:
             try:
                 positions[key] = window_layout.act(self._state(key), self._app.process_stamp, rectangle=rects[key])
+                if p.get('settings',{}).get('mode') in ('错落排列','反向错落'):window_layout.raise_tracked(self._state(key),self._app.process_stamp)
                 count += 1
             except (OSError, ValueError):
                 pass
@@ -697,6 +941,10 @@ class DesktopApi:
                     if options.get('single'):
                         ids, rects, work, frame = self._layout({**options,'ids':options.get('layout_ids',options['ids'])})
                         window_layout.act(self._state(key), self._app.process_stamp, rectangle=rects[key])
+                        if options.get('settings',{}).get('mode') in ('错落排列','反向错落'):
+                            for member in ids:
+                                try:window_layout.raise_tracked(self._state(member),self._app.process_stamp)
+                                except (OSError,ValueError):pass
                     elif options.get('auto') and role.get('confirmed'):
                         self._arrange({**options,'ids':options.get('layout_ids',options['ids'])})
                     try:
@@ -718,15 +966,28 @@ class DesktopApi:
         webview.windows[0].destroy()
         return True
 
+    def _reuse_running(self, key, options=None):
+        options = options or {}
+        if options.get('settings'):
+            try:
+                members = options.get('layout_ids') or options.get('ids') or [key]
+                _, rects, _, _ = self._layout({**options, 'ids': members})
+                if key in rects:
+                    window_layout.act(self._state(key), self._app.process_stamp, rectangle=rects[key])
+            except (OSError, ValueError):
+                pass
+        self._launch_status[key] = {'phase': 'ready', 'error': '',
+                                   **({'request_id': options['request_id']} if options.get('request_id') else {})}
+        return {'id': key, 'focused': True, 'existing': True}
+
     def _start_member(self, p):
         key = self._ids([p.get('id')])[0]
         members = self._ids(p.get('ids', []))
         if key not in members:
             raise ValueError('此角色已不在当前方案中，请刷新后重试')
         if self._running(self._state(key)):
-            window_layout.act(self._state(key), self._app.process_stamp, focus=True)
-            return {'id': key, 'focused': True}
-        self._layout(p)  # Validate the full arrangement, retaining this member's slot.
+            return self._reuse_running(key, p)
+        self._layout(p)  # Retain the member's original scheme slot.
         options = {**p, 'ids': [key], 'layout_ids': members, 'single': True}
         result = self._start(options)[0]
         if result.get('error'):
@@ -736,8 +997,7 @@ class DesktopApi:
     def _single_start(self, p):
         key = self._ids([p.get('id')])[0]
         if self._running(self._state(key)):
-            window_layout.act(self._state(key), self._app.process_stamp, focus=True)
-            return {'id': key, 'focused': True}
+            return self._reuse_running(key)
         options = {'ids': [key], 'single': True, 'profiles': {},
                    'settings': {'width': 960, 'height': 540, 'columns': 1, 'gap': 0,
                                 'padding': 8, 'aspect': True, 'mode': '网格排列'}}
@@ -758,11 +1018,15 @@ class DesktopApi:
         if not ids:
             raise ValueError('请先勾选角色')
         roles = {a['id']: a for a in self._roles()}
-        self._launch_preflight({'ids': p.get('layout_ids', ids)})
+        existing = [key for key in ids if self._running(self._state(key))]
+        result = [self._reuse_running(key, p) for key in existing]
+        ids = [key for key in ids if key not in existing]
+        if not ids:
+            return result
+        self._launch_preflight({'ids': [key for key in p.get('layout_ids', ids) if not self._running(self._state(key))]})
         if len(ids) > 1 and any(not roles[i].get('confirmed') for i in ids):
             raise ValueError('待确认角色请一次只启动一个')
         game, exe = self._app.find_game(self._config()['game'])
-        result = []
         for key in ids:
             role = roles[key]
             if role.get('imported') and role.get('cache_mode') != 'fresh-single-role':
@@ -770,8 +1034,7 @@ class DesktopApi:
                 continue
             try:
                 if self._running(self._state(key)):
-                    window_layout.act(self._state(key), self._app.process_stamp, focus=True)
-                    result.append({'id': key, 'focused': True})
+                    result.append(self._reuse_running(key, p))
                     continue
                 preferences = game_preferences.resolve(self._config(), key, p.get('game_preferences'))
                 self._launch_status[key] = {'phase':'starting','error':'',**({'request_id':request_id} if request_id else {})}

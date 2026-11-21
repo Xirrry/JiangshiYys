@@ -40,6 +40,8 @@ def main():
         copy(ROOT/name,package/name)
     copy(Path(compiled['binary']),package/'yys_core.pyd')
     copy(ROOT/'hardware/mail-reader/mail_agent.dll',package/'hardware/mail-reader/mail_agent.dll')
+    copy(ROOT/'hardware/bounty-reader/bounty_agent.dll',package/'hardware/bounty-reader/bounty_agent.dll')
+    copy(ROOT/'hardware/shop-reader/shop_agent.dll',package/'hardware/shop-reader/shop_agent.dll')
     copy(ROOT/'hardware/IdentityView.dll',package/'hardware/IdentityView.dll')
     copy(ROOT/'hardware/MinHook-LICENSE.txt',package/'hardware/MinHook-LICENSE.txt')
     for name in ['app-icon.png','app-icon.ico']:copy(ROOT/'assets'/name,package/'assets'/name)

@@ -1,0 +1,8 @@
+:root{--daruma-ink:#a67716;--daruma-fragment-ink:#99678d}
+:root[data-skin="ink"]{--daruma-ink:#ecc36c;--daruma-fragment-ink:#d9a9cc}
+.resource-daruma,.resource-daruma>span,.resource-daruma>b,.resource-daruma>strong,.resource-daruma>i{color:var(--daruma-ink)!important}
+.resource-daruma-fragment,.resource-daruma-fragment>span,.resource-daruma-fragment>b,.resource-daruma-fragment>strong,.resource-daruma-fragment>i{color:var(--daruma-fragment-ink)!important}
+
+:root{--mystery-amulet-ink:#8050ac}
+:root[data-skin="ink"]{--mystery-amulet-ink:#c5a2e8}
+.mystery-amulet,.mystery-amulet>span,.mystery-amulet>b,.mystery-amulet>strong,.mystery-amulet>i{color:var(--mystery-amulet-ink)!important}

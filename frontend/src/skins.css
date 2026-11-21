@@ -1,0 +1,26 @@
+
+:root[data-skin="bamboo"]{--skin-surface:#fafbf8;--skin-base:#f0f1ec;--skin-raised:#e6e9e1;--skin-selection:#dfe6dc;--skin-border:#d5d9cf;--skin-accent:#627460;--skin-text:#383d36;--skin-muted:#777e71;--skin-on-accent:#f4f5f0;--skin-stage:#303831;--skin-shadow:#242921;--skin-danger:#a65e54;--skin-success:#58735a;color-scheme:light}
+:root[data-skin="mist"]{--skin-surface:#fafafa;--skin-base:#f0f1f2;--skin-raised:#e7e9eb;--skin-selection:#e0e5e9;--skin-border:#d4d8dc;--skin-accent:#687b8a;--skin-text:#363d43;--skin-muted:#747f88;--skin-on-accent:#f3f5f6;--skin-stage:#303840;--skin-shadow:#24292e;--skin-danger:#a56060;--skin-success:#5f7a70;color-scheme:light}
+:root[data-skin="ink"]{--skin-surface:#292c2e;--skin-base:#222527;--skin-raised:#303436;--skin-selection:#3c4445;--skin-border:#414648;--skin-accent:#586d68;--skin-text:#c9cecc;--skin-muted:#959e9a;--skin-on-accent:#dfe5e1;--skin-stage:#1a1d1e;--skin-shadow:#000000;--skin-danger:#c3857d;--skin-success:#9baa91;color-scheme:dark}
+:root[data-skin="paper"]{color-scheme:light}
+.skin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:800px}
+.skin-choice{padding:0!important;overflow:hidden;text-align:left;border-radius:12px!important;position:relative}
+.skin-choice[aria-pressed="true"]{outline:2px solid var(--skin-accent,#785b40);outline-offset:3px}
+.skin-sample{display:flex;gap:8px;padding:14px;height:110px;box-sizing:border-box;background:var(--sample-base)}
+.skin-sample-side{width:24%;border-radius:5px;background:var(--sample-side)}
+.skin-sample-main{flex:1;display:flex;flex-direction:column;gap:9px}
+.skin-sample-bar{height:13px;width:45%;border-radius:4px;background:var(--sample-accent)}
+.skin-sample-cards{display:flex;gap:7px;flex:1}.skin-sample-cards i{flex:1;border-radius:5px;background:var(--sample-side)}
+.skin-caption{display:block;padding:14px 16px}.skin-caption strong{display:block;font-size:15px}.skin-caption small{display:block;margin-top:5px;font-size:12px;opacity:.75}
+
+/* Keep large reading surfaces neutral; color is concentrated in selection and actions. */
+:root[data-skin="bamboo"] .sidebar{background:#e8ebe4}
+:root[data-skin="mist"] .sidebar{background:#e8eaec}
+:root[data-skin="ink"] .sidebar{background:#292d2e}
+:root:not([data-skin="paper"]) .nav-item{color:var(--skin-muted)}
+:root:not([data-skin="paper"]) .nav-item.active{color:var(--skin-text);background:var(--skin-selection)}
+:root:not([data-skin="paper"]) .nav-item.active::before{background:var(--skin-accent)}
+:root:not([data-skin="paper"]) .dojo-panel,:root:not([data-skin="paper"]) .card{background:var(--skin-surface)}
+:root:not([data-skin="paper"]) .dojo-day-resources>div{background:var(--skin-base)}
+:root:not([data-skin="paper"]) .dojo-day-resources b{color:var(--skin-text)}
+:root:not([data-skin="paper"]) .dojo-tabs button.active{color:var(--skin-text);background:var(--skin-selection);box-shadow:none;border:1px solid var(--skin-border)}

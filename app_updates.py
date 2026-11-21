@@ -20,6 +20,9 @@ REPO = 'Xirrry/JiangshiYys'
 API = 'https://api.github.com/repos/' + REPO + '/releases?per_page=30'
 PAGE = 'https://github.com/' + REPO + '/releases'
 MANIFEST = 'https://raw.githubusercontent.com/' + REPO + '/main/updates.json'
+GITEE_REPO = 'xirry/JiangshiYys'
+GITEE_PAGE = 'https://gitee.com/' + GITEE_REPO + '/releases'
+GITEE_MANIFESTS = tuple('https://gitee.com/' + GITEE_REPO + '/raw/' + branch + '/updates.json' for branch in ('master','main'))
 LIMIT = 256 * 1024 * 1024
 
 
@@ -34,6 +37,12 @@ def trusted_url(url):
     u = urllib.parse.urlsplit(url)
     if u.scheme != 'https' or u.username or u.password or u.port not in (None, 443):
         raise ValueError('更新地址不可信')
+    if u.hostname == 'gitee.com':
+        decoded = urllib.parse.unquote(u.path)
+        if any(part in ('.','..') for part in decoded.split('/')):
+            raise ValueError('更新地址不可信')
+        if url in GITEE_MANIFESTS or decoded.startswith('/' + GITEE_REPO + '/releases/') or re.fullmatch(r'/attachments/download/[0-9]+/[^/]+',decoded):
+            return url
     if url == MANIFEST:
         return url
     if u.hostname == 'api.github.com' and u.path.startswith('/repos/' + REPO + '/releases'):
@@ -57,7 +66,7 @@ def fetch(url):
     return urllib.request.build_opener(Redirects()).open(req, timeout=20)
 
 
-def select_release(rows, current, experimental):
+def select_release(rows, current, experimental, provider='github'):
     current_version = version(current)
     candidates = []
     for row in rows:
@@ -85,13 +94,19 @@ def select_release(rows, current, experimental):
             url = asset.get('browser_download_url', '')
             expected = 'https://github.com/' + REPO + '/releases/download/' + row['tag_name'] + '/' + name
             size = asset.get('size')
-            if name not in allowed or url != expected or not isinstance(size, int) or not 0 < size <= LIMIT:
+            valid_url = url == expected
+            if provider == 'gitee':
+                parsed_url = urllib.parse.urlsplit(url)
+                valid_url = parsed_url.hostname == 'gitee.com' and (parsed_url.path.startswith('/' + GITEE_REPO + '/releases/') or bool(re.fullmatch(r'/attachments/download/[0-9]+/[^/]+',parsed_url.path)))
+                try:trusted_url(url)
+                except ValueError:valid_url=False
+            if name not in allowed or not valid_url or not isinstance(size, int) or not 0 < size <= LIMIT:
                 continue
             if not re.fullmatch(r'sha256:[0-9a-f]{64}', digest):
                 continue
             candidates.append((parsed, not row.get('prerelease'), {'version': number, 'tag': row['tag_name'], 'name': name,
-                'url': url, 'page': PAGE + '/tag/' + row['tag_name'], 'size': size, 'sha256': digest[7:],
-                'notes': str(row.get('body') or '')[:8000], 'experimental': bool(row.get('prerelease'))}))
+                'url': url, 'page': (GITEE_PAGE if provider=='gitee' else PAGE) + '/tag/' + row['tag_name'], 'size': size, 'sha256': digest[7:],
+                'notes': str(row.get('body') or '')[:8000], 'experimental': bool(row.get('prerelease')), 'provider':provider}))
     return max(candidates, key=lambda x: (x[0], x[1]))[2] if candidates else None
 
 
@@ -139,7 +154,7 @@ class UpdateManager:
 
     def status(self):
         with self.lock:
-            return {**copy.deepcopy(self.state), 'auto_check': self.auto, 'current': self.brand['version']}
+            return {**copy.deepcopy(self.state), 'auto_check': self.auto, 'current': self.brand['version'], 'gitee_page':GITEE_PAGE, 'github_page':PAGE}
 
     def _set(self, **values):
         with self.lock:
@@ -163,7 +178,7 @@ class UpdateManager:
             self.busy = True
             self.cancel_event.clear()
             self.state.update(cancel_pending=False, speed=0)
-            self.state.update(phase='checking' if action == 'check' else 'installing' if action == 'install' else 'downloading', message='正在连接 GitHub…', error='')
+            self.state.update(phase='checking' if action == 'check' else 'installing' if action == 'install' else 'downloading', message='正在连接更新源…', error='')
             if action == 'check':
                 self.state.update(release=None, path='', received=0, total=0)
             threading.Thread(target=self._work, args=(action,), daemon=True).start()
@@ -172,27 +187,29 @@ class UpdateManager:
     def _work(self, action):
         try:
             if action == 'check':
-                rows = None
-                last_error = None
-                source_label = ''
-                for source in (MANIFEST, API):
-                    try:
-                        with fetch(source) as response:
-                            content = response.read(2 * 1024 * 1024 + 1)
-                        if len(content) > 2 * 1024 * 1024:
-                            raise ValueError('版本信息过大')
-                        candidate = json.loads(content)
-                        if not isinstance(candidate, list):
-                            raise ValueError('版本信息格式异常')
-                        rows = candidate
-                        source_label = '公开更新清单' if source == MANIFEST else 'GitHub Releases'
-                        break
-                    except Exception as error:
-                        last_error = error
-                        continue
-                if rows is None:
-                    raise last_error or ValueError('无法读取版本信息')
-                release = select_release(rows, self.brand['version'], self.brand.get('release_channel') == 'experimental')
+                releases=[]
+                last_error=None
+                successful=[]
+                providers=[]
+                if self.brand.get('gitee_updates') is True:
+                    providers.append(('gitee',GITEE_MANIFESTS))
+                providers.append(('github',(MANIFEST,API)))
+                for provider,sources in providers:
+                    for source in sources:
+                        try:
+                            with fetch(source) as response:
+                                content=response.read(2*1024*1024+1)
+                            if len(content)>2*1024*1024:raise ValueError('版本信息过大')
+                            rows=json.loads(content)
+                            if not isinstance(rows,list):raise ValueError('版本信息格式异常')
+                            candidate=select_release(rows,self.brand['version'],self.brand.get('release_channel')=='experimental',provider)
+                            successful.append(provider)
+                            if candidate:releases.append(candidate)
+                            break
+                        except Exception as error:last_error=error
+                if not successful:raise last_error or ValueError('无法读取版本信息')
+                release=max(releases,key=lambda row:(version(row['version']),not row['experimental'],row['provider']=='gitee')) if releases else None
+                source_label=('Gitee' if release['provider']=='gitee' else 'GitHub') if release else ' / '.join('Gitee' if p=='gitee' else 'GitHub' for p in successful)
                 self._set(phase='available' if release else 'latest', release=release, checked_at=time.strftime('%Y-%m-%d %H:%M:%S'), source=source_label,
                           message='发现新版本' if release else '当前已是本更新通道的最新版本')
             elif action in ('download', 'download_install'):
@@ -252,7 +269,7 @@ class UpdateManager:
         if received != release['size'] or digest.hexdigest() != release['sha256']:
             raise UpdateFailure('安装包完整性校验失败，文件不会用于升级，请重新下载。')
         partial.rename(target)
-        self._set(phase='downloaded', message='下载完成，SHA-256 校验通过。请关闭游戏和启动器、备份 data 后按手册升级。', path=str(target), speed=0)
+        self._set(phase='downloaded', message='下载完成，SHA-256 校验通过，可安装并重启启动器。', path=str(target), speed=0)
 
     def _install(self, release):
         self._set(phase='installing', message='正在核验并准备自动安装，请勿关闭程序…')
@@ -267,7 +284,11 @@ class UpdateManager:
             raise UpdateFailure('当前版本缺少自动安装组件，请打开发布页手动升级。')
         if self.root.is_symlink() or self.root.is_junction():
             raise UpdateFailure('当前安装目录被重定向，请手动升级。')
-        job = self.root.parent / ('.JiangshiYys-update-' + uuid.uuid4().hex)
+        workspace = self.root / '_updates'
+        workspace.mkdir(exist_ok=True)
+        if workspace.is_symlink() or workspace.is_junction():
+            raise UpdateFailure('更新目录不可重定向。')
+        job = workspace / ('job-' + uuid.uuid4().hex)
         fresh = job / 'new'
         prefix = release['name'][:-4]
         with zipfile.ZipFile(source) as archive:
@@ -275,7 +296,7 @@ class UpdateManager:
             total = sum(item.file_size for item in entries)
             if len(entries) > 20000 or total > 700 * 1024 * 1024:
                 raise UpdateFailure('安装包解压大小异常，请手动升级。')
-            if shutil.disk_usage(self.root.parent).free < total + 64 * 1024 * 1024:
+            if shutil.disk_usage(self.root).free < total + 64 * 1024 * 1024:
                 raise UpdateFailure('磁盘空间不足，无法准备新版本。')
             seen = set()
             for item in entries:
@@ -283,7 +304,7 @@ class UpdateManager:
                 clean = parts[:-1] if item.is_dir() else parts
                 if not clean or clean[0] != prefix or any(not p or p in ('.', '..') or ':' in p or chr(92) in p or p.rstrip(' .') != p for p in clean):
                     raise UpdateFailure('安装包包含不安全路径，已停止安装。')
-                if stat.S_ISLNK(item.external_attr >> 16) or (len(clean) > 1 and clean[1].casefold() in {'data', 'update-downloads'}):
+                if stat.S_ISLNK(item.external_attr >> 16) or (len(clean) > 1 and clean[1].casefold() in {'data', 'update-downloads', '_updates'}):
                     raise UpdateFailure('安装包包含链接或私人数据目录，已停止安装。')
                 key = '/'.join(clean).casefold()
                 if key in seen:
@@ -309,9 +330,9 @@ class UpdateManager:
         self._set(phase='restarting', message='即将关闭并安装，完成后自动重新打开。旧版文件保留在更新备份目录。')
         self.install_callback(job)
 
-    def open_page(self):
+    def open_page(self, provider='github'):
         import webbrowser
-        webbrowser.open(PAGE)
+        webbrowser.open(GITEE_PAGE if provider=='gitee' else PAGE)
         return self.status()
 
     def open_download(self):

@@ -17,7 +17,7 @@ def rectangles(keys, work, width=640, height=360, columns=3, gap=8, padding=8,
     cols = min(columns, len(keys))
     rows = math.ceil(len(keys) / cols)
     fw, fh = frame
-    if mode == '错落排列':
+    if mode in ('错落排列','反向错落'):
         offset = 28
         max_w = total_w - padding * 2 - offset * (len(keys) - 1)
         max_h = total_h - padding * 2 - offset * (len(keys) - 1)
@@ -33,10 +33,15 @@ def rectangles(keys, work, width=640, height=360, columns=3, gap=8, padding=8,
     else:
         cw, ch = min(width, available_w), min(height, available_h)
     outer_w, outer_h = cw + fw, ch + fh
+    origin_x=origin_y=0
+    if mode in ('错落排列','反向错落'):
+        origin_x=max(0,(total_w-padding*2-outer_w-28*(len(keys)-1))//3)
+        origin_y=max(0,(total_h-padding*2-outer_h-28*(len(keys)-1))//3)
     result = {}
     for i, key in enumerate(keys):
-        dx, dy = (i * 28, i * 28) if mode == '错落排列' else ((i % cols) * (outer_w + gap), (i // cols) * (outer_h + gap))
-        result[key] = (x + padding + dx, y + padding + dy, outer_w, outer_h)
+        dx, dy = (i * 28, i * 28) if mode in ('错落排列','反向错落') else ((i % cols) * (outer_w + gap), (i // cols) * (outer_h + gap))
+        if mode=='反向错落':dy=(len(keys)-1-i)*28
+        result[key] = (x + padding + origin_x + dx, y + padding + origin_y + dy, outer_w, outer_h)
     return result
 
 
@@ -98,7 +103,7 @@ def profile_rectangles(keys, work, profiles, frame=(0, 0), **settings):
     custom = mode == '自定义坐标'
     if custom:
         mw, mh = w, h
-    elif mode == '错落排列':
+    elif mode in ('错落排列','反向错落'):
         mw, mh = w-padding*2-offset*(len(keys)-1), h-padding*2-offset*(len(keys)-1)
     else:
         mw, mh = (w-padding*2-gap*(cols-1))//cols, (h-padding*2-gap*(rows-1))//rows
@@ -117,13 +122,19 @@ def profile_rectangles(keys, work, profiles, frame=(0, 0), **settings):
         sizes.append((cw+fw, ch+fh))
     col_width = [max([sizes[i][0] for i in range(c, len(keys), cols)]) for c in range(cols)]
     row_height = [max(v[1] for v in sizes[r*cols:(r+1)*cols]) for r in range(rows)]
+    origin_x=origin_y=0
+    if mode in ('错落排列','反向错落'):
+        extent_w=max(i*offset+size[0] for i,size in enumerate(sizes))
+        extent_h=max(((len(keys)-1-i) if mode=='反向错落' else i)*offset+size[1] for i,size in enumerate(sizes))
+        origin_x=max(0,(w-padding*2-extent_w)//3);origin_y=max(0,(h-padding*2-extent_h)//3)
     result = {}
     for i, key in enumerate(keys):
         item = profiles.get(key, {})
         dx = padding+sum(col_width[:i % cols])+gap*(i % cols)
         dy = padding+sum(row_height[:i//cols])+gap*(i//cols)
-        if mode == '错落排列':
-            dx = dy = padding+i*offset
+        if mode in ('错落排列','反向错落'):
+            dx=padding+origin_x+i*offset
+            dy=padding+origin_y+((len(keys)-1-i) if mode=='反向错落' else i)*offset
         px, py = x+dx, y+dy
         if custom:
             px, py = int(item.get('x', px)), int(item.get('y', py))
@@ -284,3 +295,11 @@ def running_game_windows(pids, stamp_fn):
             rows.append({'id':str(pid)+':'+str(stamp),'pid':pid,'stamp':str(stamp),'title':title.value,'rect':[rect.left,rect.top,rect.right-rect.left,rect.bottom-rect.top]})
         except (OSError,ValueError):continue
     return rows
+
+
+def raise_tracked(state, stamp_fn):
+    """Put a verified game atop normal windows without taking input focus."""
+    hwnd=guarded_window(state,stamp_fn);u=api();owner=W.DWORD()
+    u.GetWindowThreadProcessId(hwnd,C.byref(owner))
+    if owner.value!=state['pid'] or stamp_fn(state['pid'])!=state['stamp']:raise ValueError('窗口身份已变化')
+    if not u.SetWindowPos(hwnd,None,0,0,0,0,0x0010|0x0001|0x0002):raise C.WinError(C.get_last_error())

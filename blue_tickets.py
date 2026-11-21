@@ -372,17 +372,28 @@ class BlueStore:
             role=matches[0];scope=str(identity['server_id'])+':'+str(identity['short_id'])
         key=role['id']
         mails=envelope.get('dojo_mails')
-        if not isinstance(mails,list) or len(mails)>500:raise ValueError('邮件结果格式无效')
+        if not isinstance(mails,list) or len(mails)>10000:raise ValueError('邮件结果格式无效')
         valid={}
         for mail in mails:
-            if mail.get('type')==400175 or type(mail.get('type')) is not int or not str(mail.get('reason','')).startswith(('gym','dojo')):continue
+            kind=mail.get('type');reason=mail.get('reason','')
+            xiajian=(kind==622502 and reason=='gc_receive_settle_reward_boss') or (kind==622503 and reason=='gc_receive_settle_reward_position')
+            if kind==400175 or type(kind) is not int or not (str(reason).startswith(('gym','dojo')) or kind==400179 or xiajian):continue
             uid=mail.get('uid');stamp=mail.get('time');items=mail.get('items')
             if not isinstance(uid,str) or not 1<=len(uid)<=128 or type(stamp) is not int or not 1262304000<=stamp<=int(dt.datetime.now().timestamp())+300:raise ValueError('邮件ID或时间无效')
-            if not isinstance(items,list) or len(items)>200:raise ValueError('邮件奖励未完整加载，请打开邮箱后重试')
-            rewards=[]
+            if not isinstance(items,list) or len(items)>10000:raise ValueError('邮件奖励未完整加载，请打开邮箱后重试')
+            if mail.get('attachments_complete') is False:raise ValueError('邮件附件未完整读取，未保存')
+            rewards=[];souls={};quantity=0
             for item in items:
                 if not isinstance(item,(list,tuple)) or not 2<=len(item)<=5 or type(item[0]) is not int or type(item[1]) is not int or not 0<=item[1]<=1000000000:raise ValueError('邮件奖励格式未知，未保存')
-                rewards.append(list(item))
+                quantity+=item[1]
+                info=item[2] if len(item)>2 and isinstance(item[2],dict) else None
+                if info is not None and 'suitid' in info:
+                    star=info.get('qua')
+                    if type(star) is not int or not 1<=star<=6:raise ValueError('御魂星级未识别，未保存')
+                    soul_id=-1000-star;souls[soul_id]=souls.get(soul_id,0)+item[1]
+                else:rewards.append(list(item))
+            rewards.extend([[item_id,souls[item_id]] for item_id in sorted(souls,reverse=True)])
+            if 'reward_quantity' in mail and (type(mail['reward_quantity']) is not int or quantity!=mail['reward_quantity']):raise ValueError('邮件奖励数量校验失败，未保存')
             if not any(item[1]>0 for item in rewards):continue
             date=dt.datetime.fromtimestamp(stamp,dt.timezone(dt.timedelta(hours=8))).date().isoformat()
             item={'uid':uid,'type':mail['type'],'reason':mail['reason'],'time':stamp,'date':date,'items':rewards}
@@ -400,6 +411,9 @@ class BlueStore:
                 names=envelope.get('item_names',{})
                 if not isinstance(names,dict):raise ValueError('物品名称表格式无效')
                 reward_ids={str(i[0]) for mail in valid.values() for i in mail['items']}
+                names=dict(names)
+                for star in range(1,7):
+                    if str(-1000-star) in reward_ids:names[str(-1000-star)]=str(star)+'星御魂'
                 for item_id,name in names.items():
                     if str(item_id) not in reward_ids or not isinstance(name,str) or not 1<=len(name)<=160:continue
                     old_name=db.execute('SELECT name FROM resource_names WHERE item_id=?',(str(item_id),)).fetchone()
@@ -423,7 +437,7 @@ class BlueStore:
                     old=db.execute('SELECT payload FROM mail_rewards WHERE scope=? AND uid=?',(scope,uid)).fetchone()
                     payload=json.dumps(mail,ensure_ascii=False,sort_keys=True)
                     if old:
-                        if old[0]!=payload:warnings.append('同一邮件奖励发生变化，已保留原记录：'+uid)
+                        if old[0]!=payload:warnings.append(mail['date']+'：同一邮件奖励发生变化，已保留原记录，未重复累计')
                         duplicates+=1
                     else:
                         db.execute('INSERT INTO mail_rewards VALUES(?,?,?,?)',(scope,uid,key,payload));added+=1

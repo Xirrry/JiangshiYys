@@ -14,7 +14,7 @@ assert not any('site-packages' in p or 'Python312' in p for p in sys.path)
 import yys_core
 modules=['app','desktop_api','business','cache_import','close_guard','game_preferences','game_discovery','profile_cleanup',
          'laoyu_controller','laoyu_support','launcher_workspace','pinganzhi_sync','proxy_dns','proxy_support',
-         'blue_tickets','mail_reader','server_merges','single_instance','app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
+         'mystery_shop','bounty_tasks','bounty_transport','blue_tickets','mail_reader','server_merges','single_instance','app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
 for name in modules:
     module=importlib.import_module('yys_core.'+name)
     assert hasattr(module,'__compiled__'),name
@@ -120,3 +120,12 @@ from yys_core import server_merges
 assert server_merges.ROOT==root and server_merges.same_server('10001','10003')
 assert callable(api.running_windows)
 print('PASS: bundled official server equivalence and runtime-window API')
+
+from yys_core.close_guard import WindowSizeMemory
+prefs=WindowSizeMemory(fixture/'data/window-state.json',(1480,980),(1920,1080),(1120,680))
+assert prefs.capture(Mock(native=None,width=1300,height=820))
+assert WindowSizeMemory(fixture/'data/window-state.json',(1480,980),(1920,1080),(1120,680)).size==(1300,820)
+assert (root/'hardware/bounty-reader/bounty_agent.dll').is_file()
+assert (root/'hardware/shop-reader/shop_agent.dll').is_file()
+assert callable(api.bounty_tasks) and callable(api.mystery_shop)
+print('PASS: compiled window-size persistence and bounty/shop modules/reader components; no game reads')

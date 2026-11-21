@@ -13,7 +13,7 @@ import time
 ROOT=Path(__file__).resolve().parents[1]
 FILES=['app.pyw','desktop_api.py','launcher.pyw','cache_import.py','close_guard.py','game_preferences.py',
        'game_discovery.py','blue_tickets.py','mail_reader.py','single_instance.py','app_updates.py','device_identity.py','profile_cleanup.py','laoyu_controller.py','laoyu_support.py','launcher_workspace.py',
-       'pinganzhi_sync.py','proxy_dns.py','proxy_support.py','role_reader.py','server_merges.py','window_layout.py',
+       'pinganzhi_sync.py','proxy_dns.py','proxy_support.py','role_reader.py','server_merges.py','window_layout.py','window_groups.py','mystery_shop.py','bounty_tasks.py','bounty_transport.py',
        'proxy-engine-experiment/game_tcp_trial.py','proxy-engine-experiment/trial_job.py','proxy-engine-experiment/dns_bridge.py']
 OWN={Path(name).stem for name in FILES}-{'launcher'}|{'business','module_properties'}
 COMMAND="import yys_core; yys_core.main()"
@@ -110,7 +110,13 @@ def main():
             old="[str(Path(__file__).resolve()), '--broker', str(session)]"
             assert old in src
             src=src.replace(old,f"['-c',{COMMAND!r},'--tcp','--broker',str(session)]")
-        tree=Imports().visit(ast.parse(src));ast.fix_missing_locations(tree)
+        tree=Imports().visit(ast.parse(src))
+        # ROOT/HERE rewrites introduce sys.executable even in modules that did not import sys.
+        if 'sys.executable' in ast.unparse(tree) and not any(isinstance(node,ast.Import) and any(alias.name=='sys' and alias.asname is None for alias in node.names) for node in tree.body):
+            index=0
+            while index<len(tree.body) and ((isinstance(tree.body[index],ast.Expr) and isinstance(tree.body[index].value,ast.Constant) and isinstance(tree.body[index].value.value,str)) or (isinstance(tree.body[index],ast.ImportFrom) and tree.body[index].module=='__future__')):index+=1
+            tree.body.insert(index,ast.Import(names=[ast.alias(name='sys')]))
+        ast.fix_missing_locations(tree)
         code=ast.unparse(tree)+'\n';compile(code,str(package/(name+'.py')),'exec')
         (package/(name+'.py')).write_text(code,encoding='utf-8')
     (package/'__init__.py').write_text(ENTRY,encoding='utf-8')

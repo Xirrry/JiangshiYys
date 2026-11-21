@@ -4,6 +4,13 @@
 
 Windows 阴阳师桌面版角色启动工具，使用 Python、Vue 3 与 WebView2。
 
+## v9.56 更新
+
+[下载 Gitee 发行版](https://gitee.com/xirry/JiangshiYys/releases/tag/v9.56-experimental) · [GitHub 发行版](https://github.com/Xirrry/JiangshiYys/releases/tag/v9.56-experimental)
+
+资源记录现支持狭间暗域长邮件奖励、资源分类与固定排序、完整图标及邮件卡片分页；加入每日悬赏与神秘商店读取页面，改善运行窗口排列，并记住启动器窗口大小。详见[更新说明](release_tools/release-v9.56.md)。读取与代理相关功能仍为实验功能。
+
+
 ## 思路由来
 
 本软件的设计思路受 [平安志](https://member.xlhome.de5.net) 启发，感谢平安志带来的灵感。
@@ -14,7 +21,7 @@ Windows 阴阳师桌面版角色启动工具，使用 Python、Vue 3 与 WebView
 
 在 [Releases](https://github.com/Xirrry/JiangshiYys/releases) 下载 Windows x64 完整包，解压后运行「僵尸痒痒鼠.exe」。需要 WebView2 Runtime 和已安装的游戏客户端。使用说明内置于软件，也可阅读仓库中的 [用户使用手册](用户使用手册.md)。
 
-v9.55 为测试版本。IP 代理和设备接口功能未经完整测试，不保证可行性、兼容性或稳定性。检测通过不代表所有游戏流量已代理，设备功能不保证形成独立硬件身份。
+v9.56 为测试版本。IP 代理和设备接口功能未经完整测试，不保证可行性、兼容性或稳定性。检测通过不代表所有游戏流量已代理，设备功能不保证形成独立硬件身份。
 
 ## 功能
 
