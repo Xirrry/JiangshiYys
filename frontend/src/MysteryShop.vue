@@ -1,4 +1,5 @@
 <script setup>
+import workspaceCss from './workspace-layout.css?raw';
 import page from './mystery-shop-page.html?raw';
 const bridge = `<script>
 async function shopCall(action,payload={}) {
@@ -8,9 +9,7 @@ async function shopCall(action,payload={}) {
 }
 window.pywebview={api:{load:()=>shopCall('load'),windows:()=>shopCall('windows'),read:target=>shopCall('read',{target})}};
 <\/script>`;
-const content=page.replace('<script>',bridge+'<script>');
+const content=page.replace('</style>','</style><style>'+workspaceCss+'</style>').replace('<script>',bridge+'<script>');
 </script>
 <template><iframe class="shop-page" title="神秘商店" :srcdoc="content"></iframe></template>
-<style scoped>
-.shop-page{width:100%;height:100%;min-height:0;border:0;display:block;}
-</style>
+<style scoped>.shop-page{width:100%;height:100%;min-height:0;border:0;display:block;}</style>

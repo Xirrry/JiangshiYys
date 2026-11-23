@@ -18,19 +18,19 @@
 .view-switch{display:inline-flex;gap:4px;padding:4px;background:#e9e0d3;border:1px solid #ded0bc;border-radius:10px}.view-switch button{border:0;background:transparent;color:#8a755d;padding:8px 14px;border-radius:7px;font-size:12px}.view-switch button[aria-pressed=true]{background:#6b5140;color:#fff7ec;box-shadow:0 2px 6px #5c3a2220}.view-note{font-size:12px;color:#9b876d;margin:3px 0 16px;line-height:1.7}.task-context{display:none}.focus-section{margin-top:23px}.focus-section>.role-head{padding:13px 16px;border-radius:9px;background:#e9dfd0;border-left:3px solid #a48a68}.focus-section[data-group=jade]>.role-head{background:#eedbd7;border-color:#ad6264}.focus-section[data-group=stamina]>.role-head{background:#eee3c9;border-color:#ac873c}.focus-section[data-group=food]>.role-head{background:#e3e9d6;border-color:#718855}body[data-view=focus] .task-context{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;padding-top:10px;margin-top:0;border-top:1px solid #aa8e6830;font-size:12px;color:#775f47}body[data-view=focus] .task-context small{font-size:11px}body[data-view=focus] .grid{grid-template-columns:repeat(auto-fill,minmax(245px,1fr))}body[data-view=list] main{max-width:1500px}body[data-view=list] .grid{display:flex;flex-direction:column;gap:5px}body[data-view=list] .task{display:grid;grid-template-columns:minmax(145px,1fr) minmax(185px,1.5fr) minmax(180px,1.4fr) 85px;column-gap:16px;row-gap:6px;padding:12px 15px;border-top-width:1px;align-items:center}body[data-view=list] .task-top{grid-column:1;grid-row:1;gap:6px;justify-content:flex-start}body[data-view=list] .task-top strong{font-size:14px}body[data-view=list] .round-tag{grid-column:1;grid-row:2;font-size:10px}body[data-view=list] .reward-marker{grid-column:1;grid-row:3;font-size:10px;padding:3px 6px}body[data-view=list] .progress{grid-column:2;grid-row:1 / 4;padding:7px 9px;font-size:12px}body[data-view=list] .rewards{grid-column:3;grid-row:1 / 4;margin:0;gap:4px}body[data-view=list] .reward-item{padding:3px;min-width:72px;gap:4px}body[data-view=list] .reward-icon{width:24px;height:24px;flex-basis:24px}body[data-view=list] .reward-detail strong{font-size:12px}body[data-view=list] .reward-detail small{font-size:10px}body[data-view=list] .task-status{grid-column:4;grid-row:1 / 4;font-size:11px;line-height:1.7}body[data-view=list] .task[data-type-mark]::before{font-size:65px;bottom:8px;right:10px}body[data-view=list] .task-context{display:none}body[data-view=list] .role-head h2{font-size:16px}@media(max-width:850px){body[data-view=list] .task{grid-template-columns:minmax(160px,1fr) minmax(180px,1.3fr);gap:8px 12px}body[data-view=list] .progress{grid-column:2;grid-row:1 / 4}body[data-view=list] .rewards{grid-column:1;grid-row:4}body[data-view=list] .task-status{grid-column:2;grid-row:4}body[data-view=list] .reward-item{min-width:65px}.display-controls{align-items:flex-start}}
 
 body[data-view=focus] #records{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start;margin-top:20px}body[data-view=focus] .focus-section{margin:0}body[data-view=focus] .focus-section>.role-head{margin-bottom:10px;padding:12px 14px}body[data-view=focus] .focus-section>.role-head h2{font-size:16px}body[data-view=focus] .grid{display:flex;flex-direction:column;gap:10px}body[data-view=focus] .task{gap:10px}body[data-view=focus] .empty{grid-column:1 / -1}
+body[data-view=focus] .task-context .quick-launch{padding:3px 7px;font-size:11px;line-height:1.5;background:rgba(255,250,243,.65);border-color:#aa8e6840;color:#775f47;margin-left:auto}body[data-view=focus] .task-context .quick-launch:hover{background:#fffaf3;border-color:#aa8e68}
 </style>
-<main><header><div><small>僵尸痒痒鼠 · 每日记录</small><h1>每日悬赏</h1></div><label>查看日期 <input type="date" id="day"></label></header>
-<div class="toolbar"><select id="window" aria-label="游戏窗口"><option>等待连接</option></select><button id="refresh">刷新窗口</button><button id="read">读取所选</button><button class="primary" id="all">读取全部运行窗口</button></div>
-<p class="hint">普通、协作、分享与食材任务分别记录。重复读取更新同一条任务，历史记录保存在本机。北京时间 05:00 开始早轮，18:00 开始晚轮。按采集时刻归轮，凌晨 05:00 前归前一天晚轮。</p>
-<div class="filters">
-<label>轮次 <select id="filter-round"><option value="all">全部轮次</option><option value="morning">早轮 05:00—18:00</option><option value="evening">晚轮 18:00—次日05:00</option></select></label>
+<body class="workspace-document bounty-document"><main><header class="workspace-header"><div><h1>每日悬赏</h1><p>按角色记录每日悬赏，汇总重点奖励</p></div><div class="toolbar workspace-actions"><button id="refresh-records">刷新记录</button><select id="window" aria-label="游戏窗口"><option>等待连接</option></select><button id="refresh">刷新窗口</button><button id="read">读取所选窗口</button><button class="primary" id="all">读取全部窗口</button></div></header>
+<div class="filters workspace-filters"><label class="header-date">查看日期 <input type="date" id="day"></label>
+<label>轮次 <select id="filter-round"><option value="morning">早轮 05:00—18:00</option><option value="evening">晚轮 18:00—次日05:00</option></select></label>
 <label>角色 <select id="filter-role"><option value="all">全部角色</option></select></label>
 <label>类型 <select id="filter-type"><option value="all">全部类型</option><option value="协作">协</option><option value="分享">享</option><option value="普通">普通</option><option value="食材">食材</option><option value="其他">其他</option></select></label>
 <label>奖励 <select id="filter-reward"><option value="all">全部奖励</option><option value="jade">勾玉</option><option value="stamina">体力</option><option value="food">食材</option><option value="other">其他奖励</option></select></label>
 <label>状态 <select id="filter-state"><option value="all">全部状态</option><option value="unfinished">未完成</option><option value="finished">已完成</option><option value="unclaimed">已完成未领取</option><option value="claimed">已领取</option><option value="unknown">状态未知</option></select></label>
 <button id="reset-filters">重置筛选</button>
-</div><div class="filter-count" id="filter-count"></div><div class="display-controls"><div class="view-switch" role="group" aria-label="悬赏视图"><button data-bounty-view="cards" aria-pressed="true">▦ 卡片总览</button><button data-bounty-view="list" aria-pressed="false">☷ 紧凑列表</button><button data-bounty-view="focus" aria-pressed="false">◇ 重点汇总</button></div><label>任务顺序 <select id="sort"><option value="reward">协/享奖励优先</option><option value="original">记录原顺序</option></select></label><div class="legend"><span style="--color:#ad6264">勾玉</span><span style="--color:#ac873c">体力</span><span style="--color:#718855">食材</span></div></div>
-<div class="view-note" id="view-note"></div><div id="status" role="status">正在连接读取工具…</div><div id="errors" role="alert"></div><div id="records"></div></main>
+</div><div class="filter-count" id="filter-count"></div><div class="display-controls"><div class="view-switch workspace-view-switch" role="group" aria-label="悬赏视图"><button data-bounty-view="cards" aria-pressed="true">▦ 卡片总览</button><button data-bounty-view="list" aria-pressed="false">☷ 紧凑列表</button><button data-bounty-view="focus" aria-pressed="false">◇ 重点汇总</button></div><label>任务顺序 <select id="sort"><option value="reward">协/享奖励优先</option><option value="original">记录原顺序</option></select></label><div class="legend"><span style="--color:#ad6264">勾玉</span><span style="--color:#ac873c">体力</span><span style="--color:#718855">食材</span></div></div>
+<div class="view-note" id="view-note"></div><details class="page-help"><summary>读取说明</summary><p>普通、协作、分享与食材任务分别记录。重复读取更新同一条任务，历史记录保存在本机。北京时间 05:00 开始早轮，18:00 开始晚轮。按采集时刻归轮，凌晨 05:00 前归前一天晚轮。</p></details>
+<div id="status" class="workspace-status" role="status">正在连接读取工具…</div><div id="errors" role="alert"></div><div id="records"></div></main>
 <script>
 const byId=id=>document.getElementById(id);
 let busy=false;
@@ -63,6 +63,11 @@ function rewardsView(rewards){
  return container;
 }
 
+function receivedBounty(task){
+ if(!['协作','分享'].includes(task.category))return false;
+ // Participant 1 initiates the task; participant 2 receives the invitation.
+ return (task.participants||[]).some(member=>member.label==='self'&&member.index===2);
+}
 function rewardPriority(task){
  const special=task.category==='协作'||task.category==='分享';
  if(!special)return {rank:4};
@@ -88,11 +93,16 @@ function orderedTasks(tasks){
  if(byId('sort').value==='reward')entries.sort((a,b)=>a.priority.rank-b.priority.rank||a.index-b.index);
  return entries;
 }
+function currentBountyRound(now=new Date()){
+ const hour=new Date(now.getTime()+8*60*60*1000).getUTCHours();
+ return hour>=5&&hour<18?'morning':'evening';
+}
+byId('filter-round').value=currentBountyRound();
 const filterIds=['filter-round','filter-role','filter-type','filter-reward','filter-state'];
 function matchesFilters(role,task){
  const value=id=>byId(id).value;
  if(value('filter-role')!=='all'&&value('filter-role')!==role.key)return false;
- if(value('filter-round')!=='all'&&task.round!==value('filter-round'))return false;
+ if(task.round!==value('filter-round'))return false;
  if(value('filter-type')!=='all'&&task.category!==value('filter-type'))return false;
  const reward=rewardPriority({...task,category:'协作'}).key;
  if(value('filter-reward')!=='all'){
@@ -108,12 +118,14 @@ function matchesFilters(role,task){
   default:return true;
  }
 }
+let launchMatches={},launchingRoles=new Set();
+async function syncLaunchMatches(history){try{launchMatches=await window.pywebview.api.launch_matches(history.roles.map(r=>r.key))}catch{launchMatches={}}}
 function render(history){
  if(!history.ok)throw Error(history.error);
  currentHistory=history;
  document.body.dataset.view=bountyView;
  document.querySelectorAll('[data-bounty-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.bountyView===bountyView)));
- byId('view-note').textContent={cards:'按角色查看完整任务，协与享保留底纹标记。',list:'逐行并列目标、奖励与状态，适合多角色快速检查。',focus:'跨角色按协／享的勾玉、体力、食材奖励归集，其他任务保留在末组。'}[bountyView];
+ byId('view-note').textContent={cards:'按角色查看完整任务，协与享保留底纹标记。',list:'逐行并列目标、奖励与状态，适合多角色快速检查。',focus:'跨角色按协／享的勾玉、体力、食材奖励归集，隐藏好友发起的任务，其他任务保留在末组。'}[bountyView];
  const selectedRole=byId('filter-role').value;
  byId('filter-role').replaceChildren(new Option('全部角色','all'),...history.roles.map(role=>new Option(role.name+' · '+role.server,role.key)));
  if(history.roles.some(role=>role.key===selectedRole))byId('filter-role').value=selectedRole;
@@ -124,7 +136,7 @@ function render(history){
  const root=byId('records');root.replaceChildren();byId('filter-count').textContent='';
  if(!history.roles.length){root.append(element('div','当天暂无记录，打开测试角色的悬赏面板后点击读取。','empty'));return}
  for(const role of history.roles){
-  const tasks=role.tasks.filter(task=>matchesFilters(role,task));
+  const tasks=role.tasks.filter(task=>matchesFilters(role,task)&&(bountyView!=='focus'||!receivedBounty(task)));
   if(!tasks.length)continue;
   shown+=tasks.length;shownRoles++;
   const section=element('section',undefined,'role');
@@ -156,7 +168,15 @@ function render(history){
     }
    }else targetLine('',task.monster||(task.category==='普通'&&task.name!=='神秘妖怪'?task.name:null),task.current,task.target);
    card.append(panel,element('div',statusText(task),'task-status '+(task.finished===true?'done':task.finished===false?'':'unknown')),rewardsView(task.rewards));
-   const context=element('div',undefined,'task-context');context.append(element('strong',role.name),element('small',role.server));card.append(context);
+   const context=element('div',undefined,'task-context');context.append(element('strong',role.name),element('small',role.server));
+   if(bountyView==='focus'&&priority.key&&launchMatches[role.key]){
+    const launch=element('button',launchingRoles.has(role.key)?'正在启动…':launchMatches[role.key].label,'quick-launch');
+    launch.type='button';launch.disabled=launchingRoles.has(role.key)||launchMatches[role.key].label==='正在启动…';
+    launch.title='打开角色管理中匹配的游戏角色';launch.setAttribute('aria-label',role.name+' · '+launch.textContent);
+    launch.onclick=async()=>{if(launchingRoles.has(role.key))return;launchingRoles.add(role.key);render(currentHistory);try{await window.pywebview.api.launch_role(role.key);await syncLaunchMatches(currentHistory)}catch(e){byId('errors').textContent=e.message}finally{launchingRoles.delete(role.key);render(currentHistory)}};
+    context.append(launch);
+   }
+   card.append(context);
    if(bountyView==='focus')buckets.get(priority.key||'other').cards.push(card);else grid.append(card);
   }
   if(bountyView!=='focus'){section.append(grid);root.append(section);}
@@ -165,13 +185,14 @@ function render(history){
  byId('filter-count').textContent='显示 '+shown+' / '+total+' 条任务 · '+shownRoles+' 个角色';
  if(!shown)root.append(element('div','没有符合条件的任务，可调整或重置筛选。','empty'));
 }
-async function history(){try{render(await window.pywebview.api.history(byId('day').value||null))}catch(e){byId('errors').textContent=e.message}}
+async function history(){try{const data=await window.pywebview.api.history(byId('day').value||null);await syncLaunchMatches(data);render(data)}catch(e){byId('errors').textContent=e.message}}
 async function refresh(){if(busy)return;setBusy(true);try{const r=await window.pywebview.api.windows();if(!r.ok)throw Error(r.error);const previous=byId('window').value;byId('window').replaceChildren(...r.windows.map(w=>new Option(w.title,w.id)));if(!r.windows.length)byId('window').append(new Option('未检测到游戏窗口',''));if(r.windows.some(w=>w.id===previous))byId('window').value=previous;byId('status').textContent=r.windows.length+' 个运行窗口'}catch(e){byId('errors').textContent=e.message}finally{setBusy(false)}}
-async function read(target){if(busy)return;if(!target){byId('errors').textContent='请先选择运行窗口';return}setBusy(true);byId('errors').textContent='';byId('status').textContent='正在按窗口依次读取，游戏可能短暂停顿…';try{const r=await window.pywebview.api.read(target);if(!r.ok)throw Error(r.error);render(r.history);const ok=r.results.filter(x=>x.ok),failed=r.results.filter(x=>!x.ok);byId('status').textContent='读取完成，成功 '+ok.length+' 个窗口，失败 '+failed.length+' 个窗口';byId('errors').textContent=failed.map(x=>x.title+'：'+x.error).join('\n')}catch(e){byId('errors').textContent=e.message;byId('status').textContent='读取未完成'}finally{setBusy(false)}}
+async function read(target){if(busy)return;if(!target){byId('errors').textContent='请先选择运行窗口';return}setBusy(true);byId('errors').textContent='';byId('status').textContent='正在按窗口依次读取，游戏可能短暂停顿…';try{const r=await window.pywebview.api.read(target);if(!r.ok)throw Error(r.error);await syncLaunchMatches(r.history);render(r.history);const ok=r.results.filter(x=>x.ok),failed=r.results.filter(x=>!x.ok);byId('status').textContent='读取完成，成功 '+ok.length+' 个窗口，失败 '+failed.length+' 个窗口';byId('errors').textContent=failed.map(x=>x.title+'：'+x.error).join('\n')}catch(e){byId('errors').textContent=e.message;byId('status').textContent='读取未完成'}finally{setBusy(false)}}
 byId('refresh').addEventListener('click',refresh);byId('read').addEventListener('click',()=>read(byId('window').value));byId('all').addEventListener('click',()=>read('all'));byId('day').addEventListener('change',history);
+byId('refresh-records').onclick=history;
 byId('sort').addEventListener('change',()=>{try{localStorage.setItem('bounty-task-sort',byId('sort').value)}catch{}if(currentHistory)render(currentHistory)});
 filterIds.forEach(id=>byId(id).addEventListener('change',()=>{if(currentHistory)render(currentHistory)}));
-byId('reset-filters').addEventListener('click',()=>{filterIds.forEach(id=>byId(id).value='all');if(currentHistory)render(currentHistory)});
+byId('reset-filters').addEventListener('click',()=>{filterIds.forEach(id=>byId(id).value=id==='filter-round'?currentBountyRound():'all');if(currentHistory)render(currentHistory)});
 document.querySelectorAll('[data-bounty-view]').forEach(button=>button.onclick=()=>{bountyView=button.dataset.bountyView;try{localStorage.setItem('bounty-page-view',bountyView)}catch{}if(currentHistory)render(currentHistory)});
 async function init(){await refresh();await history()}
 if(window.pywebview?.api)init();else window.addEventListener('pywebviewready',init,{once:true});

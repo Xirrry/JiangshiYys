@@ -5,7 +5,7 @@ import threading,uuid,json
 from pathlib import Path
 
 def read(pid, expected_stamp, stamp_fn, dll, flags=4):
-    if flags not in (4,32):raise ValueError("Unsupported read selection")
+    if flags not in (4,8,16,32):raise ValueError("Unsupported read selection")
     if not expected_stamp or stamp_fn(pid)!=expected_stamp:
         raise ValueError('游戏窗口已变化，请刷新后重试')
     dll=Path(dll).resolve()
@@ -120,3 +120,95 @@ def read(pid, expected_stamp, stamp_fn, dll, flags=4):
      if safe:
       for addr in allocs:Free(process,addr,0,0x8000)
      Close(process)
+
+
+def read_checklist(pid, expected_stamp, stamp_fn, dll):
+    """Refresh read-only assistance data, wait for this request, then read all checklist data."""
+    import time
+    request = None
+    error = None
+    try:
+        request = read(pid, expected_stamp, stamp_fn, dll, 4)
+        if not isinstance(request,dict) or not request.get('nonce'):
+            raise ValueError('协战查询未能启动')
+    except Exception as exc:
+        error = str(exc)
+    shop_request = None
+    try:shop_request = read(pid, expected_stamp, stamp_fn, dll, 16)
+    except Exception:pass
+    def finish(document):
+        try:
+            import shop_checklist
+            offers = read(pid, expected_stamp, stamp_fn, dll, 8)
+            identity = offers.get('role', {})
+            own = document.get('role', {})
+            if (identity.get('server_id'),identity.get('short_id')) != (own.get('server_id'),own.get('short_id')):return document
+            until = time.monotonic() + 1.5
+            while True:
+                query = offers.get('_shrine_query', {})
+                matched = bool(shop_request and query.get('nonce') == shop_request.get('nonce') and query.get('role') == shop_request.get('role'))
+                ready = bool(matched and query.get('treasure_ready'))
+                shrine_ready = bool(matched and query.get('ready'))
+                if ready and shrine_ready or not matched or query.get('expired') or time.monotonic()>=until:break
+                time.sleep(.15)
+                offers = read(pid, expected_stamp, stamp_fn, dll, 8)
+                identity=offers.get('role', {})
+                if (identity.get('server_id'),identity.get('short_id')) != (own.get('server_id'),own.get('short_id')):return document
+            goods = [g for g in offers.get('goods', []) if (g.get('shop') != '千物宝库' or ready) and (g.get('shop') != '神龛' or shrine_ready)]
+            document['observations'].update(shop_checklist.observations(goods, offers.get('balances', {})))
+            if not shrine_ready:document['_support_refresh_warning'] = document.get('_support_refresh_warning','') + '；神龛本次未更新，保留原记录'
+            if not ready:document['_support_refresh_warning'] = document.get('_support_refresh_warning','') + '；千物宝库本次未更新，保留原记录'
+        except Exception:document['_support_refresh_warning'] = document.get('_support_refresh_warning','') + '；重要商店本次未更新，保留原记录'
+        return document
+    deadline = time.monotonic() + 6
+    while True:
+        document = read(pid, expected_stamp, stamp_fn, dll, 32)
+        state = document.pop('_support_query', {})
+        same = bool(request and state.get('nonce') == request['nonce'] and state.get('role') == request.get('role'))
+        prayer = document.pop('_prayer_query', {})
+        prayer_ready = bool(request and prayer.get('nonce') == request['nonce'] and prayer.get('role') == request.get('role') and prayer.get('ready'))
+        boss = document.pop('_boss_query', {})
+        boss_ready = bool(request and boss.get('nonce') == request['nonce'] and boss.get('role') == request.get('role') and boss.get('ready'))
+        gve = document.pop('_gve_query', {})
+        gve_ready = bool(request and gve.get('nonce') == request['nonce'] and gve.get('role') == request.get('role') and gve.get('ready'))
+        if not gve_ready:document.get('observations', {}).pop('d7', None)
+        resource = document.pop('_resource_query', {})
+        resource_ready = bool(request and resource.get('nonce') == request['nonce'] and resource.get('role') == request.get('role') and resource.get('ready'))
+        if not resource_ready:
+            for task in ('d12','d13'):document.get('observations', {}).pop(task, None)
+        mentor = document.pop('_mentor_query', {})
+        mentor_ready = bool(request and mentor.get('nonce') == request['nonce'] and mentor.get('role') == request.get('role') and mentor.get('ready'))
+        if not mentor_ready:
+            for task in ('mentoring_practice','mentoring_recruit','mentoring_points'):document.get('observations', {}).pop(task, None)
+        kirin=document.pop('_kirin_query',{})
+        kirin_ready=bool(request and kirin.get('nonce')==request['nonce'] and kirin.get('role')==request.get('role') and kirin.get('ready'))
+        if not kirin_ready:document.get('observations',{}).pop('guild_kirin',None)
+        banquet=document.pop('_banquet_query',{})
+        banquet_ready=bool(request and banquet.get('nonce')==request['nonce'] and banquet.get('role')==request.get('role') and banquet.get('ready'))
+        if banquet_ready and 'guild_banquet' in document.get('observations',{}):document['observations']['guild_banquet']['detail']+=' · 寮本周开启 '+str(banquet['opened'])+' / 2 次'
+        if not boss_ready:document.pop('_guild_boss_evidence',None)
+        if same and kirin_ready and banquet_ready and mentor_ready and resource_ready and gve_ready and boss_ready and prayer_ready and state.get('ready') is True and 'd10' in document.get('observations', {}):
+            return finish(document)
+        if not (same and state.get('ready') is True):
+            document.get('observations', {}).pop('d10', None)
+        if error or not same or state.get('expired') or time.monotonic() >= deadline:
+            document['_support_refresh_warning'] = '协战未获取到本次最新响应，保留原记录' + ('：'+error if error else '')
+            if not gve_ready:document['_support_refresh_warning'] += '；阴界之门未获取到最新响应，保留原记录'
+            if not resource_ready:document['_support_refresh_warning'] += '；经验/金币妖怪未获取到最新响应，保留原记录'
+            if not kirin_ready:document['_support_refresh_warning'] += '；麒麟未获取到最新个人数据，保留原记录'
+            if not banquet_ready:document['_support_refresh_warning'] += '；宴会开启次数本次未读到，个人参与单独记录'
+            if not mentor_ready:document['_support_refresh_warning'] += '；守护历练未获取到最新响应，保留原记录'
+            return finish(document)
+        time.sleep(0.15)
+
+
+def read_windows(rows, read_one):
+    """Read independent game processes concurrently; consume/save on the caller thread."""
+    from concurrent.futures import ThreadPoolExecutor
+    unique=list({(row['pid'],row['stamp']):row for row in rows}.values())
+    if not unique:return
+    def fetch(row):
+        try:return row,read_one(row),None
+        except Exception as error:return row,None,error
+    with ThreadPoolExecutor(max_workers=min(3,len(unique)),thread_name_prefix='game-read') as pool:
+        yield from pool.map(fetch,unique)

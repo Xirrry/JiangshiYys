@@ -743,3 +743,12 @@ input[type=checkbox] { accent-color: #826449; }
 .sidebar .nav-item>.nav-icon{display:block;flex:0 0 18px;width:18px;height:18px;overflow:visible}
 .sidebar .nav-item>.nav-label{display:block;flex:1;min-width:0;line-height:20px}
 .sidebar .nav-item>b,.sidebar .nav-item>em{flex:none;line-height:18px}
+
+.sidebar .nav-item>.nav-reminder-count{flex:none;min-width:18px;max-width:34px;padding:0 5px;margin-left:auto;border-radius:5px;background:#dfceb3;color:#876243;font-size:10px;font-weight:500;line-height:19px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sidebar .nav-item>.nav-label{white-space:nowrap}
+
+/* The application frame never scrolls; workspaces and dialogs own their content. */
+html,body,#app{height:100%;min-height:0;overflow:hidden}
+.shell.compact-workbench{height:100dvh;min-height:0;overflow:hidden}
+.shell .main.blue-page>*{min-height:0;min-width:0}
+.role-scroll,.task-list,.overview-table,.shop-scroll,.dojo-scroll,.plan-list,.scheme-members,.groups{overscroll-behavior:contain}

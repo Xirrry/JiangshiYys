@@ -14,7 +14,7 @@ assert not any('site-packages' in p or 'Python312' in p for p in sys.path)
 import yys_core
 modules=['app','desktop_api','business','cache_import','close_guard','game_preferences','game_discovery','profile_cleanup',
          'laoyu_controller','laoyu_support','launcher_workspace','pinganzhi_sync','proxy_dns','proxy_support',
-         'mystery_shop','bounty_tasks','bounty_transport','blue_tickets','mail_reader','server_merges','single_instance','app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
+         'task_checklist','shop_checklist','weekly_shops','window_groups','mystery_shop','bounty_tasks','bounty_transport','blue_tickets','mail_reader','server_merges','single_instance','app_updates','device_identity','role_reader','window_layout','game_tcp_trial','trial_job','dns_bridge','module_properties']
 for name in modules:
     module=importlib.import_module('yys_core.'+name)
     assert hasattr(module,'__compiled__'),name
@@ -129,3 +129,22 @@ assert (root/'hardware/bounty-reader/bounty_agent.dll').is_file()
 assert (root/'hardware/shop-reader/shop_agent.dll').is_file()
 assert callable(api.bounty_tasks) and callable(api.mystery_shop)
 print('PASS: compiled window-size persistence and bounty/shop modules/reader components; no game reads')
+
+# v9.57 release-critical functionality, using retained synthetic data only.
+from yys_core import task_checklist, window_layout
+check_root=fixture/'release957';check_api=desktop_api.DesktopApi(data_root=check_root)
+consent=check_api.usage_consent()['data'];assert not consent['accepted']
+assert not check_api.usage_consent('accept',{'version':consent['version'],'agreed':False})['ok']
+assert check_api.usage_consent('accept',{'version':consent['version'],'agreed':True})['data']['accepted']
+assert desktop_api.DesktopApi(data_root=check_root).usage_consent()['data']['accepted']
+store=task_checklist.ChecklistStore(check_root)
+for i in (1,2):store.save({'role':{'server_id':1,'short_id':i,'nickname':'fixture'},'observations':{'d0':{'status':'done','detail':'saved'}}})
+store.group({'action':'reorder','roles':['1:2','1:1']});assert [r['key'] for r in store.load()['roles']]==['1:2','1:1']
+store.group({'action':'hide_role','role':'1:1'});assert len(store.load()['roles'])==1 and len(store.load()['archived_roles'])==1
+store.group({'action':'restore_role','role':'1:1'});assert len(store.load()['roles'])==2
+assert {'lanqi_exchange','guild_kirin','guild_banquet','evening_boss'}<=task_checklist.IDS
+rects=window_layout.profile_rectangles(['a','b'],[0,0,1920,1080],{},mode='反向错落',start_x=30,start_y=20,offset_x=100,offset_y=80)
+assert rects['b'][0]-rects['a'][0]==100 and rects['a'][1]-rects['b'][1]==80
+assert (root/'hardware/checklist-reader/checklist_agent.dll').is_file()
+brand=json.loads((root/'brand.json').read_text(encoding='utf-8'));assert brand['version']=='9.57'
+print('PASS: v9.57 compiled consent, checklist ordering/archive restore, new task catalog and diagonal parameters')

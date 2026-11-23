@@ -1,4 +1,5 @@
 import {createApp} from 'vue';
-import App from './App.vue';
+import FirstUseGate from './FirstUseGate.vue';
 import './style.css';
-createApp(App).mount('#app');
+import './workspace-layout.css';
+createApp(FirstUseGate).mount('#app');

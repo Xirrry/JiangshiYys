@@ -42,11 +42,12 @@ def _sizes(width,height,frame,shrink,aspect=True):
         if unit>=10:yield unit*16+frame[0],unit*9+frame[1]
 
 
-def plan_blocks(groups,work,columns=3,width=960,height=540,gap=8,padding=8,new_row=True,frame=(0,0),shrink=False,aspect=True):
+def plan_blocks(groups,work,columns=3,width=960,height=540,gap=8,padding=8,new_row=True,frame=(0,0),shrink=False,aspect=True,auto_columns=False):
     x,y,w,h=work
     for ow,oh in _sizes(width,height,frame,shrink,aspect):
         if ow>w-padding*2 or oh>h-padding*2:continue
-        cols=min(columns,max(1,(w-padding*2+gap)//(ow+gap)))
+        capacity=max(1,(w-padding*2+gap)//(ow+gap))
+        cols=capacity if auto_columns else min(columns,capacity)
         result={};slot=0
         for _,members in groups:
             if new_row and slot%cols:slot+=cols-slot%cols

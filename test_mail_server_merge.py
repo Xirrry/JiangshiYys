@@ -4,9 +4,9 @@ from blue_tickets import BlueStore
 import server_merges
 root=Path(__file__).resolve().parent/'test-results'/('mail-merge-'+str(time.time_ns()))
 stamp=int(dt.datetime(2026,11,11,12,tzinfo=dt.timezone(dt.timedelta(hours=8))).timestamp())
-roles=[{'id':'night','nickname':'演示角色','server':'夜之月','short_id':'12345678','server_id':'10003'}]
-def env(server=10001,who=12345678,uid='mail',n=2):
- return {'role':{'nickname':'演示角色','server_id':server,'short_id':who,'server':'春之樱'},'dojo_mails':[{'uid':uid,'type':400179,'reason':'gym2_attack','time':stamp,'items':[[490001,n]]}]}
+roles=[{'id':'night','nickname':'禁耳','server':'夜之月','short_id':'21015715','server_id':'10003'}]
+def env(server=10001,who=21015715,uid='mail',n=2):
+ return {'role':{'nickname':'禁耳','server_id':server,'short_id':who,'server':'春之樱'},'dojo_mails':[{'uid':uid,'type':400179,'reason':'gym2_attack','time':stamp,'items':[[490001,n]]}]}
 s=BlueStore(root)
 # Simulate an archive already synchronized before merge support, and a selected empty original role.
 r=s.import_mail(env(),s.mail_archives([])['revision'],[],project_blue=True,standalone=True)

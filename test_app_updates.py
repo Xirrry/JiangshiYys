@@ -107,6 +107,7 @@ manager.state.update(release=rel,path=str(archive),phase='downloaded')
 jobs=[];manager.install_callback=jobs.append
 manager._work('install')
 assert manager.status()['phase']=='restarting' and len(jobs)==1
+assert jobs[0].is_relative_to(fixture/'_updates')
 assert (jobs[0]/'new'/'brand.json').is_file()
 assert not (jobs[0]/'new'/'data').exists()
 assert (fixture/'data'/'keep.txt').read_text()=='private-fixture'
@@ -134,3 +135,26 @@ assert not api.update('install',{'confirm':True})['ok']
 api._launch_status={};api._updating=True
 assert not api.command('add')['ok'];api._update_failed();assert not api._updating
 print('PASS: cancellation, actionable errors, malformed rows, safe install staging, traversal rejection and install guards; original fixture data unchanged')
+
+# Both update providers are pinned and require the same package checksum.
+gitee=row('9.52');gitee['assets'][0]['browser_download_url']='https://gitee.com/'+u.GITEE_REPO+'/releases/download/v9.52-experimental/'+gitee['assets'][0]['name']
+assert u.select_release([gitee],'9.50',True,'gitee')['provider']=='gitee'
+wrong=json.loads(json.dumps(gitee));wrong['assets'][0]['browser_download_url']=wrong['assets'][0]['browser_download_url'].replace(u.GITEE_REPO,'someone/else')
+assert u.select_release([wrong],'9.50',True,'gitee') is None
+for bad in ['https://gitee.com/'+u.GITEE_REPO+'/releases/../settings','https://gitee.com.evil.test/a','https://gitee.com/other/repo/releases/download/a.zip']:
+    try:u.trusted_url(bad)
+    except ValueError:pass
+    else:raise AssertionError('foreign Gitee URL accepted')
+def response(url):
+    if url in u.GITEE_MANIFESTS:return io.BytesIO(json.dumps([gitee]).encode())
+    return io.BytesIO(json.dumps([row('9.53')]).encode())
+manager=u.UpdateManager(root/'dual',{'version':'9.50','release_channel':'experimental','gitee_updates':True})
+with patch.object(u,'fetch',side_effect=response):manager._work('check')
+assert manager.status()['release']['version']=='9.53' and manager.status()['release']['provider']=='github'
+def fallback(url):
+    if url in u.GITEE_MANIFESTS:raise OSError('unavailable')
+    return io.BytesIO(json.dumps([row('9.52')]).encode())
+with patch.object(u,'fetch',side_effect=fallback):manager._work('check')
+assert manager.status()['release']['provider']=='github'
+assert jobs==[]
+print('PASS: Gitee package selection, cross-repository refusal, newest version across sources, independent GitHub fallback.')

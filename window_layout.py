@@ -88,14 +88,58 @@ def outer_for_visible(rectangle, outer, visible):
     return (x-left,y-top,width+left+right,height+top+bottom)
 
 
+def diagonal_rectangles(keys, work, profiles, frame=(0, 0), **settings):
+    """Explicit work-area-relative origin; offsets stay exact even when windows shrink."""
+    x,y,w,h=map(int,work)
+    padding=int(settings.get('padding',8))
+    sx,sy=(int(settings.get(k,0)) for k in ('start_x','start_y'))
+    ox,oy=(int(settings.get(k,100)) for k in ('offset_x','offset_y'))
+    if min(padding,sx,sy,ox,oy)<0 or max(sx,sy,ox,oy)>16384:
+        raise ValueError('起始位置和偏移必须为 0 至 16384 的整数')
+    if len(keys)>1 and ox==0 and oy==0:
+        raise ValueError('横向和纵向偏移不能同时为零')
+    fw,fh=frame
+    mw=w-padding*2-sx-ox*(len(keys)-1)-fw
+    mh=h-padding*2-sy-oy*(len(keys)-1)-fh
+    if mw<160 or mh<90:
+        raise ValueError('对角线排列超出目标屏幕，请减小起始位置、偏移或窗口数量')
+    result={}
+    for i,key in enumerate(keys):
+        item=profiles.get(key,{})
+        cw,ch=(int(item.get(k,settings.get(k,v))) for k,v in [('width',960),('height',540)])
+        if cw<160 or ch<90:raise ValueError('游戏画面尺寸至少为 160 × 90')
+        if settings.get('aspect',True):
+            unit=math.floor(min(cw/16,ch/9,mw/16,mh/9));cw,ch=unit*16,unit*9
+        else:cw,ch=min(cw,mw),min(ch,mh)
+        row=len(keys)-1-i if settings.get('mode')=='反向错落' else i
+        result[key]=(x+padding+sx+i*ox,y+padding+sy+row*oy,cw+fw,ch+fh)
+    return result
+
+
 def profile_rectangles(keys, work, profiles, frame=(0, 0), **settings):
     """One shared calculation for preview and apply; heterogeneous rows never overlap."""
     if not keys:
         return {}
+    if settings.get('mode') in ('错落排列','反向错落'):
+        return diagonal_rectangles(keys, work, profiles, frame=frame, **settings)
     x, y, w, h = map(int, work)
     columns, gap, padding = (int(settings.get(k, v)) for k, v in [('columns', 3), ('gap', 8), ('padding', 8)])
     if columns < 1 or min(gap, padding) < 0:
         raise ValueError('列数至少为 1，间距和留白不能为负')
+    if settings.get('auto_columns') and settings.get('mode', '网格排列') == '网格排列':
+        candidates = []
+        for count in range(1, min(len(keys), 50) + 1):
+            try:
+                result = profile_rectangles(keys, work, profiles, frame=frame,
+                                            **{**settings, 'auto_columns': False, 'columns': count})
+            except ValueError:
+                continue
+            area = sum((r[2]-frame[0])*(r[3]-frame[1]) for r in result.values())
+            empty = math.ceil(len(keys)/count)*count-len(keys)
+            candidates.append(((area, -empty, count), result))
+        if not candidates:
+            raise ValueError('当前屏幕空间不足，请减少窗口数、间距或留白')
+        return max(candidates, key=lambda item: item[0])[1]
     cols = min(columns, len(keys))
     rows = math.ceil(len(keys)/cols)
     mode = settings.get('mode', '网格排列')

@@ -25,6 +25,9 @@ import app_updates
 import blue_tickets
 import mail_reader
 import bounty_tasks
+import task_checklist
+import weekly_shops
+import bounty_transport
 import mystery_shop
 
 ROOT = Path(__file__).resolve().parent
@@ -101,6 +104,33 @@ class DesktopApi:
         except OSError:
             return False
 
+    def usage_consent(self, action='status', payload=None):
+        """Persist the first-use acknowledgment independently of role/config data."""
+        version='2026-11-23.5'
+        path=self._root/'data'/'usage-consent.json'
+        try:
+            with self._lock:
+                if action=='decline':
+                    import webview
+                    self._allow_close=True
+                    webview.windows[0].destroy()
+                    return {'ok':True,'data':{'accepted':False,'version':version}}
+                if action=='accept':
+                    if not isinstance(payload,dict) or payload.get('version')!=version or payload.get('agreed') is not True:
+                        raise ValueError('请阅读并勾选同意当前版本的使用说明')
+                    from datetime import datetime,timezone
+                    record={'version':version,'accepted':True,'accepted_at':datetime.now(timezone.utc).isoformat(timespec='seconds')}
+                    path.parent.mkdir(parents=True,exist_ok=True)
+                    temporary=path.with_suffix('.json.tmp')
+                    temporary.write_text(json.dumps(record,ensure_ascii=False,indent=2),encoding='utf-8')
+                    temporary.replace(path)
+                elif action!='status':raise ValueError('使用说明操作无效')
+                try:record=json.loads(path.read_text(encoding='utf-8'))
+                except (OSError,ValueError):record={}
+                accepted=isinstance(record,dict) and record.get('version')==version and record.get('accepted') is True
+                return {'ok':True,'data':{'accepted':accepted,'version':version}}
+        except Exception as error:return {'ok':False,'error':str(error)}
+
     def snapshot(self):
         with self._lock:
             cfg = self._config()
@@ -116,7 +146,7 @@ class DesktopApi:
                     elif route.get('phase')=='cancelled':
                         self._launch_status[key]={**self._launch_status.get(key,{}),'phase':'cancelled','error':''}
             return {'config': cfg, 'states': states, 'devices': devices, 'screens': window_layout.screens(), 'logs': self._logs,
-                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v9.54', 'source_root': str(pinganzhi_sync.default_root())}
+                    'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v'+json.loads((ROOT/'brand.json').read_text(encoding='utf-8'))['version'], 'source_root': str(pinganzhi_sync.default_root())}
 
     def update(self, action='status', payload=None):
         try:
@@ -239,10 +269,10 @@ class DesktopApi:
         return ordered
 
     def _unified_settings(self, value=None):
-        source={**{'screen':'','columns':3,'width':960,'height':540,'gap':8,'padding':8,'new_row':True,'aspect':True},**(value or {})}
+        source={**{'screen':'','columns':3,'width':960,'height':540,'gap':8,'padding':8,'new_row':True,'aspect':True,'auto_columns':False},**(value or {})}
         result={k:int(source[k]) for k in ('columns','width','height','gap','padding')}
         if not 1<=result['columns']<=50 or not 160<=result['width']<=16384 or not 90<=result['height']<=16384 or any(not 0<=result[k]<=1000 for k in ('gap','padding')):raise ValueError('按方案排列参数超出范围')
-        result.update({k:bool(source[k]) for k in ('new_row','aspect')});result['screen']=str(source['screen'])
+        result.update({k:bool(source[k]) for k in ('new_row','aspect','auto_columns')});result['screen']=str(source['screen'])
         return result
 
     def _unified_screen(self, settings):
@@ -273,7 +303,7 @@ class DesktopApi:
                 frame=(0,0)
                 for row in rows:
                     f=window_layout.border({'pid':row['pid'],'stamp':int(row['stamp'])},self._app.process_stamp);frame=(max(frame[0],f[0]),max(frame[1],f[1]))
-                opts={k:settings[k] for k in ('columns','width','height','gap','padding','new_row','aspect')}
+                opts={k:settings[k] for k in ('columns','width','height','gap','padding','new_row','aspect','auto_columns')}
                 shrunk=False
                 try:rects=window_groups.plan_blocks(groups,target['work'],frame=frame,**opts)
                 except window_groups.LayoutSpaceError:
@@ -366,8 +396,9 @@ class DesktopApi:
                 settings=p.get('settings',{})
                 opts={k:int(settings.get(k,v)) for k,v in [('width',960),('height',540),('columns',3),('gap',8),('padding',8)]}
                 if not 160<=opts['width']<=16384 or not 90<=opts['height']<=16384 or not 1<=opts['columns']<=50 or any(not 0<=opts[k]<=1000 for k in ('gap','padding')):raise ValueError('排列参数超出范围')
-                opts.update(aspect=bool(settings.get('aspect',True)),mode=settings.get('mode','网格排列'))
+                opts.update(aspect=bool(settings.get('aspect',True)),mode=settings.get('mode','网格排列'),auto_columns=bool(settings.get('auto_columns',False)))
                 if opts['mode'] not in ('网格排列','错落排列','反向错落','自定义坐标'):raise ValueError('排列模式无效')
+                opts.update({k:int(settings.get(k,v)) for k,v in [('start_x',0),('start_y',0),('offset_x',100),('offset_y',100)]})
                 frames=[window_layout.border(states[k],self._app.process_stamp) for k in ids]
                 frame=(max(f[0] for f in frames),max(f[1] for f in frames))
                 profiles=p.get('profiles',{}) if opts['mode']=='自定义坐标' else {}
@@ -387,6 +418,113 @@ class DesktopApi:
                 return {'ok':True,'data':{'results':results}}
         except Exception as error:return {'ok':False,'error':str(error)}
 
+    def data_read_job(self, action='status', payload=None):
+        p=payload or {}
+        try:
+            with self._lock:
+                current=getattr(self,'_data_read_job',None)
+                if action=='status':
+                    if not current or p.get('id')!=current['id']:raise ValueError('读取任务不存在，请刷新记录')
+                    return {'ok':True,'data':copy.deepcopy(current)}
+                if action!='start' or p.get('kind') not in ('checklist','shops'):raise ValueError('读取任务无效')
+                if self._updating:raise ValueError('正在安装更新，请稍后再试')
+                if current and current['state']=='running' or self._mail_reading or self._bounty_reading or self._shop_reading:raise ValueError('已有读取任务，请等待完成')
+                job={'id':uuid.uuid4().hex,'state':'running'}
+                self._data_read_job=job
+                kind=p['kind'];request=copy.deepcopy(p.get('request') or {})
+                def work():
+                    try:
+                        reply=self.task_checklist('read',request) if kind=='checklist' else self.weekly_shops('read',request)
+                    except Exception as error:reply={'ok':False,'error':str(error)}
+                    with self._lock:job.update(state='finished',reply=reply)
+                threading.Thread(target=work,daemon=True,name='data-read-job').start()
+                return {'ok':True,'data':copy.deepcopy(job)}
+        except Exception as error:return {'ok':False,'error':str(error)}
+
+    def weekly_shops(self,action='load',payload=None):
+        p=payload or {};reading=False
+        try:
+            with self._lock:
+                if self._updating:raise ValueError('正在安装更新，请稍后再试')
+                store=weekly_shops.WeeklyShopStore(self._root)
+                if action=='read':
+                    if self._mail_reading or self._bounty_reading or self._shop_reading:raise ValueError('已有读取任务，请稍后再试')
+                    self._shop_reading=True;reading=True
+                if action=='display':
+                    if self._shop_reading:raise ValueError('正在读取商店，请读取完成后保存显示选择')
+                    return {'ok':True,'data':store.display(p.get('keys'))}
+            if action=='load':data=store.load()
+            elif action=='windows':data=store.windows(self._app)
+            elif action=='read':data=store.read(self._app,p.get('target','all'))
+            else:raise ValueError('操作无效')
+            return {'ok':True,'data':data}
+        except Exception as e:return {'ok':False,'error':str(e)}
+        finally:
+            if reading:
+                with self._lock:self._shop_reading=False
+
+    def task_checklist(self, action='load', payload=None):
+        p=payload or {};reading=False
+        try:
+            with self._lock:
+                if self._updating:raise ValueError('正在安装更新，请稍后再试')
+                store=task_checklist.ChecklistStore(self._root)
+                if action=='read':
+                    if self._mail_reading or self._bounty_reading or self._shop_reading:raise ValueError('已有读取任务，请等待完成')
+                    self._bounty_reading=True;reading=True
+            if action=='windows':
+                rows=window_layout.running_game_windows(role_reader.game_pids(),self._app.process_stamp)
+                return {'ok':True,'data':[{'id':x['id'],'title':x['title']} for x in rows]}
+            if action=='reminders':return {'ok':True,'data':store.foster_reminders()}
+            if action=='set':store.set(p)
+            elif action=='groups':store.group(p)
+            elif action=='snapshots':
+                result=store.setting_snapshot(p)
+                return {'ok':True,'data':{'snapshot':store.load(),**result}}
+            elif action=='read':
+                rows=window_layout.running_game_windows(role_reader.game_pids(),self._app.process_stamp)
+                if not rows:raise ValueError('没有运行中的游戏窗口')
+                target=p.get('target','all')
+                selected_role=p.get('role')
+                if selected_role:
+                    if not any(role['key']==selected_role for role in store.load()['roles']):raise ValueError('所选角色不存在，请刷新记录')
+                    rows=[task_checklist.running_role_window(self._app,selected_role,ROOT)]
+                elif target!='all':
+                    rows=[row for row in rows if row['id']==target]
+                    if len(rows)!=1:raise ValueError('所选窗口已关闭或重启，请刷新窗口列表后重试')
+                results=[]
+                def fetch(row):return bounty_transport.read_checklist(row['pid'],int(row['stamp']),self._app.process_stamp,ROOT/'hardware/checklist-reader/checklist_agent.dll')
+                for row,doc,error in bounty_transport.read_windows(rows,fetch):
+                    try:
+                        if error:raise error
+                        identity=doc['role']
+                        if selected_role and str(identity['server_id'])+':'+str(identity['short_id'])!=selected_role:raise ValueError('窗口角色已变化，请重试；原记录已保留')
+                        role_reader.parse_identity([[identity['short_id'],identity['server_id'],identity['nickname'],1]],[])
+                        catalog=json.loads((ROOT/'servers.json').read_text(encoding='utf-8'))['servers']
+                        identity['server']=next((x['name'] for x in catalog if str(x['id'])==str(identity['server_id'])),'区服待识别')
+                        evidence=doc.get('_guild_boss_evidence',{})
+                        if 'd9' not in doc.get('observations',{}) and evidence:
+                            # An undated server result can confirm an already dated weekly record,
+                            # but must never establish a new week's completion by itself.
+                            detail='本周已完成 · 伤害 '+format(evidence['damage'],',')
+                            if type(evidence.get('rank')) is int and evidence['rank']>0:detail+=' · 第 '+str(evidence['rank'])+' 名'
+                            role_key=str(identity['server_id'])+':'+str(identity['short_id'])
+                            previous=next((t for rr in store.load()['roles'] if rr['key']==role_key for t in rr['tasks'] if t['id']=='d9'),None)
+                            if previous and previous['source']=='auto' and previous['status']=='done' and previous['detail']==detail:
+                                doc['observations']['d9']={'status':'done','detail':detail}
+                            else:doc['_support_refresh_warning']='已查到退治战绩，但场次日期未核实，保留原记录'
+                        store.save(doc)
+                        result={'title':row['title'],'count':len(doc.get('observations',{})),'missing':len(task_checklist.SUPPORTED)-len(doc.get('observations',{})),'warning':doc.get('_support_refresh_warning','')}
+                        results.append(result)
+                    except Exception as e:results.append({'title':row['title'],'error':str(e)})
+                return {'ok':True,'data':{'results':results}}
+            elif action!='load':raise ValueError('操作无效')
+            return {'ok':True,'data':store.load()}
+        except Exception as e:return {'ok':False,'error':str(e)}
+        finally:
+            if reading:
+                with self._lock:self._bounty_reading=False
+
     def bounty_tasks(self, action='history', payload=None):
         p = payload or {}
         reading = False
@@ -402,6 +540,17 @@ class DesktopApi:
                         raise ValueError('已有游戏数据读取任务，请等待完成')
                     self._bounty_reading = True
                     reading = True
+            if action == 'launch_matches':
+                import server_merges
+                keys=p.get('keys',[])
+                if not isinstance(keys,list) or len(keys)>2000:raise ValueError('角色列表无效')
+                with self._lock:roles=copy.deepcopy([r for r in self._roles() if r.get('confirmed')])
+                matches={}
+                for key in keys:
+                    if not isinstance(key,str) or len(key)>80 or len(key.split(':'))!=2 or not all(x.isdigit() for x in key.split(':')):continue
+                    found=server_merges.matches(key,roles)
+                    if len(found)==1:matches[key]=found[0]['id']
+                return {'ok':True,'data':matches}
             if action == 'history':
                 return store.history(p.get('day'))
             if action == 'windows':
