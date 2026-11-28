@@ -72,6 +72,9 @@ class BlueStore:
           CREATE TABLE IF NOT EXISTS subjects(role_id TEXT PRIMARY KEY, label TEXT NOT NULL, server TEXT NOT NULL, selected INTEGER NOT NULL);
           CREATE TABLE IF NOT EXISTS records(role_id TEXT NOT NULL, date TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(role_id,date));
           CREATE TABLE IF NOT EXISTS mail_archives(scope TEXT PRIMARY KEY,archive_id TEXT UNIQUE NOT NULL,label TEXT NOT NULL,server TEXT NOT NULL);
+          CREATE TABLE IF NOT EXISTS mail_archive_groups(id TEXT PRIMARY KEY,name TEXT UNIQUE NOT NULL,collapsed INTEGER NOT NULL,position INTEGER NOT NULL);
+          CREATE TABLE IF NOT EXISTS mail_archive_members(archive_id TEXT PRIMARY KEY,group_id TEXT NOT NULL);
+          CREATE TABLE IF NOT EXISTS mail_archive_order(archive_id TEXT PRIMARY KEY,position INTEGER NOT NULL);
           CREATE TABLE IF NOT EXISTS resource_meta(item_id TEXT PRIMARY KEY,payload TEXT NOT NULL);
           CREATE TABLE IF NOT EXISTS resource_names(item_id TEXT PRIMARY KEY,name TEXT NOT NULL);
           CREATE TABLE IF NOT EXISTS mail_rewards(scope TEXT NOT NULL, uid TEXT NOT NULL, role_id TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(scope,uid));
@@ -326,10 +329,148 @@ class BlueStore:
             db.execute('INSERT INTO mail_archives VALUES(?,?,?,?)',(row['scope'],key,role.get('label','历史角色'),role.get('server','')))
             db.execute('UPDATE mail_rewards SET role_id=? WHERE scope=?',(key,row['scope']))
 
+    def _ensure_mail_archive_groups(self, db):
+        # These tables are independent of launcher roles, checklist groups and blue subjects.
+        db.execute("INSERT OR IGNORE INTO mail_archive_groups VALUES('','未分组',0,0)")
+        next_position = db.execute('SELECT COALESCE(MAX(position),-1)+1 FROM mail_archive_order').fetchone()[0]
+        for row in db.execute('SELECT archive_id FROM mail_archives ORDER BY rowid').fetchall():
+            key = row['archive_id']
+            db.execute("INSERT OR IGNORE INTO mail_archive_members VALUES(?,'')", (key,))
+            if not db.execute('SELECT 1 FROM mail_archive_order WHERE archive_id=?', (key,)).fetchone():
+                db.execute('INSERT INTO mail_archive_order VALUES(?,?)', (key, next_position))
+                next_position += 1
+
     def _mail_archive_snapshot(self, db):
-        return {'revision':db.execute('SELECT revision FROM meta WHERE id=1').fetchone()[0],
-                'roles':[{'id':r['archive_id'],'label':r['label'],'server':r['server'],'selected':True,'active':True,'has_records':True}
-                         for r in db.execute(f'SELECT * FROM mail_archives WHERE scope IN (SELECT scope FROM mail_rewards WHERE {MAIL_REWARD_FILTER}) ORDER BY rowid')]}
+        self._ensure_mail_archive_groups(db)
+        groups = [dict(row) for row in db.execute('SELECT * FROM mail_archive_groups ORDER BY position,rowid')]
+        for group in groups:
+            group['collapsed'] = bool(group['collapsed'])
+        rows = db.execute(f"""SELECT a.*,m.group_id FROM mail_archives a
+            JOIN mail_archive_members m ON m.archive_id=a.archive_id
+            JOIN mail_archive_groups g ON g.id=m.group_id
+            JOIN mail_archive_order o ON o.archive_id=a.archive_id
+            WHERE a.scope IN (SELECT scope FROM mail_rewards WHERE {MAIL_REWARD_FILTER})
+            ORDER BY g.position,g.rowid,o.position,a.rowid""").fetchall()
+        return {'revision': db.execute('SELECT revision FROM meta WHERE id=1').fetchone()[0],
+                'groups': groups,
+                'roles': [{'id': row['archive_id'], 'label': row['label'], 'server': row['server'],
+                           'selected': True, 'active': True, 'has_records': True, 'group_id': row['group_id']}
+                          for row in rows]}
+
+    def mail_group(self, payload, roles=()):
+        """Persist archive presentation only; moves use anchors from the complete archive set."""
+        import uuid
+        if not isinstance(payload, dict):
+            raise ValueError('分组操作格式无效')
+        action = payload.get('action')
+        group_id = payload.get('id', '')
+        if not isinstance(group_id, str):
+            raise ValueError('分组无效')
+        with self.lock:
+            db = self._connect()
+            try:
+                db.execute('BEGIN IMMEDIATE')
+                if 'revision' in payload:
+                    self._revision(db, payload['revision'])
+                self._ensure_mail_archives(db, roles)
+                before = self._mail_archive_snapshot(db)
+                order_query = 'SELECT m.archive_id,m.group_id,o.position FROM mail_archive_members m JOIN mail_archive_order o ON o.archive_id=m.archive_id ORDER BY m.archive_id'
+                order_before = [tuple(row) for row in db.execute(order_query)]
+                groups = {group['id']: group for group in before['groups']}
+                members = {role['id']: role['group_id'] for role in before['roles']}
+
+                def require_group(key, named=False):
+                    if not isinstance(key, str) or key not in groups or (named and not key):
+                        raise ValueError('分组不存在，请刷新后重试')
+
+                def anchor_value():
+                    anchor = payload.get('anchor', payload.get('before'))
+                    after = payload.get('after', False)
+                    if (anchor is not None and not isinstance(anchor, str)) or type(after) is not bool:
+                        raise ValueError('排序位置无效')
+                    return anchor, after
+
+                if action in ('create', 'rename'):
+                    name = payload.get('name', '')
+                    if not isinstance(name, str) or not 1 <= len(name.strip()) <= 30 or name.strip() == '未分组':
+                        raise ValueError('请输入1至30字的分组名称')
+                    name = name.strip()
+                    if action == 'rename':
+                        require_group(group_id, named=True)
+                    if any(group['name'] == name and (action == 'create' or group['id'] != group_id) for group in groups.values()):
+                        raise ValueError('分组名称已存在')
+                    if action == 'create':
+                        position = max(group['position'] for group in groups.values()) + 1
+                        db.execute('INSERT INTO mail_archive_groups VALUES(?,?,0,?)', (uuid.uuid4().hex, name, position))
+                    else:
+                        db.execute('UPDATE mail_archive_groups SET name=? WHERE id=?', (name, group_id))
+                elif action == 'remove':
+                    require_group(group_id, named=True)
+                    db.execute("UPDATE mail_archive_members SET group_id='' WHERE group_id=?", (group_id,))
+                    db.execute('DELETE FROM mail_archive_groups WHERE id=?', (group_id,))
+                elif action in ('toggle', 'collapse_all'):
+                    collapsed = payload.get('collapsed')
+                    if type(collapsed) is not bool:
+                        raise ValueError('折叠状态无效')
+                    if action == 'collapse_all':
+                        db.execute('UPDATE mail_archive_groups SET collapsed=?', (int(collapsed),))
+                    else:
+                        require_group(group_id)
+                        db.execute('UPDATE mail_archive_groups SET collapsed=? WHERE id=?', (int(collapsed), group_id))
+                elif action in ('assign', 'move', 'move_role'):
+                    require_group(group_id)
+                    role = payload.get('role')
+                    if not isinstance(role, str) or role not in members:
+                        raise ValueError('资源角色档案不存在，请刷新后重试')
+                    anchor, after = (None, False) if action == 'assign' else anchor_value()
+                    if anchor is not None and (anchor == role or anchor not in members or members[anchor] != group_id):
+                        raise ValueError('目标角色或分组已变化，请刷新后重试')
+                    # Include unshown archives when rebuilding positions, including filtered receipts.
+                    order = [row[0] for row in db.execute('SELECT archive_id FROM mail_archive_order ORDER BY position,rowid')]
+                    all_members = dict(db.execute('SELECT archive_id,group_id FROM mail_archive_members'))
+                    order.remove(role)
+                    if anchor is not None:
+                        position = order.index(anchor) + int(after)
+                    else:
+                        positions = [index for index, key in enumerate(order) if all_members[key] == group_id]
+                        position = positions[-1] + 1 if positions else len(order)
+                    order.insert(position, role)
+                    db.execute('UPDATE mail_archive_members SET group_id=? WHERE archive_id=?', (group_id, role))
+                    db.executemany('UPDATE mail_archive_order SET position=? WHERE archive_id=?', [(index, key) for index, key in enumerate(order)])
+                elif action == 'group_move':
+                    require_group(group_id)
+                    anchor, after = anchor_value()
+                    if anchor is not None:
+                        require_group(anchor)
+                        if anchor == group_id:
+                            raise ValueError('排序目标不能是当前分组')
+                    order = list(groups)
+                    order.remove(group_id)
+                    position = order.index(anchor) + int(after) if anchor is not None else len(order)
+                    order.insert(position, group_id)
+                    db.executemany('UPDATE mail_archive_groups SET position=? WHERE id=?', [(index, key) for index, key in enumerate(order)])
+                else:
+                    raise ValueError('分组操作无效')
+                result = self._mail_archive_snapshot(db)
+                if result != before or order_before != [tuple(row) for row in db.execute(order_query)]:
+                    db.execute('UPDATE meta SET revision=revision+1 WHERE id=1')
+                    result['revision'] += 1
+                db.commit()
+                return result
+            except Exception:
+                db.rollback()
+                raise
+            finally:
+                db.close()
+
+    def mail_archive_scope(self, archive_id):
+        with self.lock:
+            db=self._connect()
+            try:
+                row=db.execute('SELECT scope FROM mail_archives WHERE archive_id=?',(archive_id,)).fetchone()
+                if not row:raise ValueError('当前资源角色档案不存在，请刷新记录')
+                return row['scope']
+            finally:db.close()
 
     def mail_archives(self, roles=()):
         with self.lock:

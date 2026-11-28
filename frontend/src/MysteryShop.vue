@@ -7,7 +7,7 @@ async function shopCall(action,payload={}) {
  if(!result.ok)throw new Error(result.error||'神秘商店操作失败');
  return result.data;
 }
-window.pywebview={api:{load:()=>shopCall('load'),windows:()=>shopCall('windows'),read:target=>shopCall('read',{target})}};
+window.pywebview={api:{load:()=>shopCall('load'),windows:()=>shopCall('windows'),read:target=>shopCall('read',{target}),mains:keys=>shopCall('mains',{keys}),read_bonds:key=>shopCall('read_bonds',{key})}};
 <\/script>`;
 const content=page.replace('</style>','</style><style>'+workspaceCss+'</style>').replace('<script>',bridge+'<script>');
 </script>

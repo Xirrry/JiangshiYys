@@ -19,8 +19,74 @@
 
 body[data-view=focus] #records{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start;margin-top:20px}body[data-view=focus] .focus-section{margin:0}body[data-view=focus] .focus-section>.role-head{margin-bottom:10px;padding:12px 14px}body[data-view=focus] .focus-section>.role-head h2{font-size:16px}body[data-view=focus] .grid{display:flex;flex-direction:column;gap:10px}body[data-view=focus] .task{gap:10px}body[data-view=focus] .empty{grid-column:1 / -1}
 body[data-view=focus] .task-context .quick-launch{padding:3px 7px;font-size:11px;line-height:1.5;background:rgba(255,250,243,.65);border-color:#aa8e6840;color:#775f47;margin-left:auto}body[data-view=focus] .task-context .quick-launch:hover{background:#fffaf3;border-color:#aa8e68}
+
+/* Compact reward lanes: quiet surfaces, one horizontal row per task. */
+body[data-view=focus] #records{display:flex;flex-direction:column;gap:20px;margin-top:16px}
+body[data-view=focus] .focus-section{width:100%;min-width:0}
+body[data-view=focus] .focus-section>.role-head{background:transparent;border:0;border-bottom:1px solid #dfd3c2;border-radius:0;padding:0 0 9px;margin:0 0 8px;justify-content:flex-start;gap:12px}
+body[data-view=focus] .focus-section>.role-head h2{font-size:14px;color:#65533f}
+body[data-view=focus] .focus-section>.role-head small{font-size:11px}
+body[data-view=focus] .grid{gap:6px}
+body[data-view=focus] .task{display:grid;grid-template-columns:minmax(145px,.9fr) minmax(225px,1.35fr) minmax(170px,1fr) minmax(115px,.65fr);gap:3px 18px;padding:12px 14px;background:#fffaf3;border:1px solid #e3d8c8;border-left:3px solid #b7a28a;border-radius:7px;align-items:center}
+body[data-view=focus] .task.reward-jade{border-left-color:#ad6264}body[data-view=focus] .task.reward-stamina{border-left-color:#ac873c}body[data-view=focus] .task.reward-food{border-left-color:#718855}
+body[data-view=focus] .task::before{display:none}
+body[data-view=focus] .task-top{grid-column:1;grid-row:1;gap:7px;justify-content:flex-start;flex-wrap:nowrap}
+body[data-view=focus] .task-top strong{font-size:14px}
+body[data-view=focus] .tag{font-size:10px;padding:2px 5px;white-space:nowrap}
+body[data-view=focus] .reward-marker{grid-column:1;grid-row:2;font-size:11px;padding:0;background:transparent;line-height:1.7}
+body[data-view=focus] .round-tag{grid-column:1;grid-row:3;font-size:10px}
+body[data-view=focus] .progress{grid-column:2;grid-row:1 / 4;padding:3px 0;background:transparent;font-size:12px;min-width:0}
+body[data-view=focus] .target-line+.target-line{margin-top:4px;padding-top:4px}
+body[data-view=focus] .rewards{grid-column:3;grid-row:1 / 3;margin:0;gap:5px}
+body[data-view=focus] .reward-item{min-width:0;padding:2px 4px;gap:5px;background:transparent}
+body[data-view=focus] .reward-icon{width:24px;height:24px;flex-basis:24px}
+body[data-view=focus] .reward-detail strong{font-size:12px}body[data-view=focus] .reward-detail small{font-size:10px}
+body[data-view=focus] .task-status{grid-column:3;grid-row:3;font-size:10px;line-height:1.5}
+body[data-view=focus] .task-context{grid-column:4;grid-row:1 / 4;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:3px;padding:0;border:0;min-width:0}
+body[data-view=focus] .task-context strong{font-size:12px;font-weight:500;overflow-wrap:anywhere}
+body[data-view=focus] .task-context .quick-launch{margin:3px 0 0}
+body[data-view=focus] details.focus-section{padding-top:3px}
+body[data-view=focus] details.focus-section>summary{cursor:pointer;list-style:none}
+body[data-view=focus] details.focus-section>summary::before{content:'▸';color:#9c8970}body[data-view=focus] details.focus-section[open]>summary::before{content:'▾'}
+@media(max-width:1000px){body[data-view=focus] .task{grid-template-columns:minmax(140px,.9fr) minmax(195px,1.2fr) minmax(130px,1fr);column-gap:12px}body[data-view=focus] .task-context{grid-column:1 / -1;grid-row:4;flex-direction:row;align-items:center;justify-content:flex-end;border-top:1px solid #eee5d7;padding-top:7px;margin-top:4px}body[data-view=focus] .task-context strong{margin-right:auto}body[data-view=focus] .task-context .quick-launch{margin:0 0 0 8px}}
+@media(max-width:650px){body[data-view=focus] .task{grid-template-columns:minmax(0,1fr);gap:5px}body[data-view=focus] .task-top,body[data-view=focus] .reward-marker,body[data-view=focus] .round-tag,body[data-view=focus] .progress,body[data-view=focus] .rewards,body[data-view=focus] .task-status,body[data-view=focus] .task-context{grid-column:1;grid-row:auto}body[data-view=focus] .round-tag{display:none}body[data-view=focus] .target-line{gap:8px}}
+
+/* Selected layout: reward lanes with separate coop/share sections. */
+body[data-view=focus] #records{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+body[data-view=focus] .reward-lane{min-width:0}
+body[data-view=focus] .lane-title{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:2px solid #dfd3c2;padding:0 0 9px;margin-bottom:12px}
+body[data-view=focus] .lane-title h2{font-size:15px}
+body[data-view=focus] .lane-title small{font-size:11px}
+body[data-view=focus] .reward-lane>.focus-section{margin-bottom:14px}
+body[data-view=focus] .reward-lane .focus-section>.role-head{border:0;padding:0;margin-bottom:7px;gap:8px}
+body[data-view=focus] .reward-lane .focus-section>.role-head h2{font-size:11px;font-weight:500;color:#8c7961}
+body[data-view=focus] .reward-lane .focus-section>.role-head small{font-size:10px;color:#aa9781}
+body[data-view=focus] .task{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:12px}
+body[data-view=focus] .task-top{justify-content:space-between;gap:8px}
+body[data-view=focus] .round-tag{display:none}
+body[data-view=focus] .progress{padding:2px 0;width:100%}
+body[data-view=focus] .target-line+.target-line{margin-top:3px;padding-top:3px}
+body[data-view=focus] .rewards{gap:6px;margin:0}
+body[data-view=focus] .task-status{font-size:10px}
+body[data-view=focus] .task-context{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:7px;margin:2px 0 0;padding-top:7px;border-top:1px solid #eee5d7}
+body[data-view=focus] .task-context strong{margin-right:auto;font-size:12px}
+body[data-view=focus] .task-context small{font-size:10px}
+body[data-view=focus] .task-context .quick-launch{margin:0}
+body[data-view=focus] details.focus-section{grid-column:1 / -1}
+body[data-view=focus] details.focus-section>.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media(max-width:950px){body[data-view=focus] #records{grid-template-columns:repeat(2,minmax(0,1fr))}body[data-view=focus] details.focus-section>.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){body[data-view=focus] #records,body[data-view=focus] details.focus-section>.grid{grid-template-columns:minmax(0,1fr)}}
+body[data-view=focus] .task{gap:4px;padding:10px 12px}
+body[data-view=focus] .reward-marker{display:none}
+body[data-view=focus] .task-top{order:0}body[data-view=focus] .progress{order:1}body[data-view=focus] .rewards{order:2}body[data-view=focus] .task-status{order:3}body[data-view=focus] .task-context{order:4}
+
+/* Preserve the original calligraphic coop/share watermark and reward colors. */
+body[data-view=focus] .task.reward-jade{background:linear-gradient(135deg,#fff5ef,#f5e3e5);border-color:#d6a7a4;border-left-color:#ad6264}
+body[data-view=focus] .task.reward-stamina{background:linear-gradient(135deg,#fff9e9,#f2e7cc);border-color:#d4be86;border-left-color:#ac873c}
+body[data-view=focus] .task.reward-food{background:linear-gradient(135deg,#f6f9ee,#e3ead7);border-color:#aebf96;border-left-color:#718855}
+body[data-view=focus] .task[data-type-mark]::before{display:block;right:12px;bottom:35px;font-family:"STXingkai","华文行楷","KaiTi","楷体",serif;font-size:100px;opacity:.07}
 </style>
-<body class="workspace-document bounty-document"><main><header class="workspace-header"><div><h1>每日悬赏</h1><p>按角色记录每日悬赏，汇总重点奖励</p></div><div class="toolbar workspace-actions"><button id="refresh-records">刷新记录</button><select id="window" aria-label="游戏窗口"><option>等待连接</option></select><button id="refresh">刷新窗口</button><button id="read">读取所选窗口</button><button class="primary" id="all">读取全部窗口</button></div></header>
+<body class="workspace-document bounty-document"><main><header class="workspace-header"><div><h1>每日悬赏</h1><p>按角色记录每日悬赏，汇总重点奖励</p></div><div class="toolbar workspace-actions"><button id="refresh-records">刷新</button><select id="window" aria-label="游戏窗口"><option>等待连接</option></select><button id="read">读取所选</button><button class="primary" id="all">读取全部</button></div></header>
 <div class="filters workspace-filters"><label class="header-date">查看日期 <input type="date" id="day"></label>
 <label>轮次 <select id="filter-round"><option value="morning">早轮 05:00—18:00</option><option value="evening">晚轮 18:00—次日05:00</option></select></label>
 <label>角色 <select id="filter-role"><option value="all">全部角色</option></select></label>
@@ -28,13 +94,13 @@ body[data-view=focus] .task-context .quick-launch{padding:3px 7px;font-size:11px
 <label>奖励 <select id="filter-reward"><option value="all">全部奖励</option><option value="jade">勾玉</option><option value="stamina">体力</option><option value="food">食材</option><option value="other">其他奖励</option></select></label>
 <label>状态 <select id="filter-state"><option value="all">全部状态</option><option value="unfinished">未完成</option><option value="finished">已完成</option><option value="unclaimed">已完成未领取</option><option value="claimed">已领取</option><option value="unknown">状态未知</option></select></label>
 <button id="reset-filters">重置筛选</button>
-</div><div class="filter-count" id="filter-count"></div><div class="display-controls"><div class="view-switch workspace-view-switch" role="group" aria-label="悬赏视图"><button data-bounty-view="cards" aria-pressed="true">▦ 卡片总览</button><button data-bounty-view="list" aria-pressed="false">☷ 紧凑列表</button><button data-bounty-view="focus" aria-pressed="false">◇ 重点汇总</button></div><label>任务顺序 <select id="sort"><option value="reward">协/享奖励优先</option><option value="original">记录原顺序</option></select></label><div class="legend"><span style="--color:#ad6264">勾玉</span><span style="--color:#ac873c">体力</span><span style="--color:#718855">食材</span></div></div>
+</div><div class="filter-count" id="filter-count"></div><div class="display-controls"><div class="view-switch workspace-view-switch" role="group" aria-label="悬赏视图"><button data-bounty-view="focus" aria-pressed="true">◇ 重点汇总</button><button data-bounty-view="cards" aria-pressed="false">▦ 卡片总览</button><button data-bounty-view="list" aria-pressed="false">☷ 紧凑列表</button></div><label>任务顺序 <select id="sort"><option value="reward">协/享奖励优先</option><option value="original">记录原顺序</option></select></label><div class="legend"><span style="--color:#ad6264">勾玉</span><span style="--color:#ac873c">体力</span><span style="--color:#718855">食材</span></div></div>
 <div class="view-note" id="view-note"></div><details class="page-help"><summary>读取说明</summary><p>普通、协作、分享与食材任务分别记录。重复读取更新同一条任务，历史记录保存在本机。北京时间 05:00 开始早轮，18:00 开始晚轮。按采集时刻归轮，凌晨 05:00 前归前一天晚轮。</p></details>
 <div id="status" class="workspace-status" role="status">正在连接读取工具…</div><div id="errors" role="alert"></div><div id="records"></div></main>
 <script>
 const byId=id=>document.getElementById(id);
 let busy=false;
-let currentHistory=null,bountyView='cards';
+let currentHistory=null,bountyView='focus',otherOpen=false;
 try{const saved=localStorage.getItem('bounty-page-view');if(['cards','list','focus'].includes(saved))bountyView=saved}catch{}
 try{byId('sort').value=localStorage.getItem('bounty-task-sort')||'reward'}catch{}
 function element(tag,text,cls){const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(cls)node.className=cls;return node}
@@ -125,14 +191,18 @@ function render(history){
  currentHistory=history;
  document.body.dataset.view=bountyView;
  document.querySelectorAll('[data-bounty-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.bountyView===bountyView)));
- byId('view-note').textContent={cards:'按角色查看完整任务，协与享保留底纹标记。',list:'逐行并列目标、奖励与状态，适合多角色快速检查。',focus:'跨角色按协／享的勾玉、体力、食材奖励归集，隐藏好友发起的任务，其他任务保留在末组。'}[bountyView];
+ byId('view-note').textContent={cards:'按角色查看完整任务，协与享保留底纹标记。',list:'逐行并列目标、奖励与状态，适合多角色快速检查。',focus:'跨角色按勾玉、体力、食材分组，协作与分享分别展示，隐藏好友发起的任务，其他悬赏默认收起，可按需展开。'}[bountyView];
  const selectedRole=byId('filter-role').value;
  byId('filter-role').replaceChildren(new Option('全部角色','all'),...history.roles.map(role=>new Option(role.name+' · '+role.server,role.key)));
  if(history.roles.some(role=>role.key===selectedRole))byId('filter-role').value=selectedRole;
  const total=history.roles.reduce((sum,role)=>sum+role.tasks.length,0);
  let shown=0,shownRoles=0;
  byId('day').value=history.day;
- const buckets=new Map([['jade',{title:'勾玉 · 协／享',cards:[]}],['stamina',{title:'体力 · 协／享',cards:[]}],['food',{title:'食材 · 协／享',cards:[]}],['other',{title:'其他悬赏',cards:[]}]]);
+ const buckets=new Map();
+ for(const [reward,title] of [['jade','勾玉'],['stamina','体力'],['food','食材']]){
+  for(const [kind,label] of [['coop','协作'],['share','分享']])buckets.set(reward+'-'+kind,{title:title+' · '+label,cards:[]});
+ }
+ buckets.set('other',{title:'其他悬赏',cards:[]});
  const root=byId('records');root.replaceChildren();byId('filter-count').textContent='';
  if(!history.roles.length){root.append(element('div','当天暂无记录，打开测试角色的悬赏面板后点击读取。','empty'));return}
  for(const role of history.roles){
@@ -177,19 +247,34 @@ function render(history){
     context.append(launch);
    }
    card.append(context);
-   if(bountyView==='focus')buckets.get(priority.key||'other').cards.push(card);else grid.append(card);
+   if(bountyView==='focus')buckets.get(priority.key?priority.key+'-'+(task.category==='分享'?'share':'coop'):'other').cards.push(card);else grid.append(card);
   }
   if(bountyView!=='focus'){section.append(grid);root.append(section);}
  }
- if(bountyView==='focus')for(const [key,bucket] of buckets){if(!bucket.cards.length)continue;const section=element('section',undefined,'focus-section');section.dataset.group=key;const heading=element('div',undefined,'role-head');heading.append(element('h2',bucket.title),element('small',bucket.cards.length+' 条任务'));const grid=element('div',undefined,'grid');grid.append(...bucket.cards);section.append(heading,grid);root.append(section);}
- byId('filter-count').textContent='显示 '+shown+' / '+total+' 条任务 · '+shownRoles+' 个角色';
+ const lanes=new Map();
+ if(bountyView==='focus')for(const [reward,label] of [['jade','勾玉'],['stamina','体力'],['food','食材']]){
+  const count=['coop','share'].reduce((n,kind)=>n+buckets.get(reward+'-'+kind).cards.length,0);
+  if(!count)continue;
+  const lane=element('div',undefined,'reward-lane');lane.dataset.reward=reward;
+  const title=element('div',undefined,'lane-title');title.append(element('h2',label),element('small',count+' 条任务'));
+  lane.append(title);root.append(lane);lanes.set(reward,lane);
+ }
+ if(bountyView==='focus')for(const [key,bucket] of buckets){
+  if(!bucket.cards.length)continue;
+  const other=key==='other',section=element(other?'details':'section',undefined,'focus-section');section.dataset.group=key;
+  const heading=element(other?'summary':'div',undefined,'role-head');
+  heading.append(element('h2',other?bucket.title:key.endsWith('-share')?'分享':'协作'),element('small',bucket.cards.length+' 条任务'+(other?' · 点击展开':'')));
+  if(other){section.open=otherOpen;section.addEventListener('toggle',()=>{if(section.isConnected)otherOpen=section.open})}
+  const grid=element('div',undefined,'grid');grid.append(...bucket.cards);section.append(heading,grid);(other?root:lanes.get(key.split('-')[0])).append(section);
+ }
+ byId('filter-count').textContent='匹配 '+shown+' / '+total+' 条任务 · '+shownRoles+' 个角色';
  if(!shown)root.append(element('div','没有符合条件的任务，可调整或重置筛选。','empty'));
 }
 async function history(){try{const data=await window.pywebview.api.history(byId('day').value||null);await syncLaunchMatches(data);render(data)}catch(e){byId('errors').textContent=e.message}}
 async function refresh(){if(busy)return;setBusy(true);try{const r=await window.pywebview.api.windows();if(!r.ok)throw Error(r.error);const previous=byId('window').value;byId('window').replaceChildren(...r.windows.map(w=>new Option(w.title,w.id)));if(!r.windows.length)byId('window').append(new Option('未检测到游戏窗口',''));if(r.windows.some(w=>w.id===previous))byId('window').value=previous;byId('status').textContent=r.windows.length+' 个运行窗口'}catch(e){byId('errors').textContent=e.message}finally{setBusy(false)}}
 async function read(target){if(busy)return;if(!target){byId('errors').textContent='请先选择运行窗口';return}setBusy(true);byId('errors').textContent='';byId('status').textContent='正在按窗口依次读取，游戏可能短暂停顿…';try{const r=await window.pywebview.api.read(target);if(!r.ok)throw Error(r.error);await syncLaunchMatches(r.history);render(r.history);const ok=r.results.filter(x=>x.ok),failed=r.results.filter(x=>!x.ok);byId('status').textContent='读取完成，成功 '+ok.length+' 个窗口，失败 '+failed.length+' 个窗口';byId('errors').textContent=failed.map(x=>x.title+'：'+x.error).join('\n')}catch(e){byId('errors').textContent=e.message;byId('status').textContent='读取未完成'}finally{setBusy(false)}}
-byId('refresh').addEventListener('click',refresh);byId('read').addEventListener('click',()=>read(byId('window').value));byId('all').addEventListener('click',()=>read('all'));byId('day').addEventListener('change',history);
-byId('refresh-records').onclick=history;
+byId('read').addEventListener('click',()=>read(byId('window').value));byId('all').addEventListener('click',()=>read('all'));byId('day').addEventListener('change',history);
+byId('refresh-records').onclick=async()=>{if(busy)return;await refresh();await history()};
 byId('sort').addEventListener('change',()=>{try{localStorage.setItem('bounty-task-sort',byId('sort').value)}catch{}if(currentHistory)render(currentHistory)});
 filterIds.forEach(id=>byId(id).addEventListener('change',()=>{if(currentHistory)render(currentHistory)}));
 byId('reset-filters').addEventListener('click',()=>{filterIds.forEach(id=>byId(id).value=id==='filter-round'?currentBountyRound():'all');if(currentHistory)render(currentHistory)});

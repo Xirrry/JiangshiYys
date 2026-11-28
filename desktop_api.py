@@ -29,6 +29,7 @@ import task_checklist
 import weekly_shops
 import bounty_transport
 import mystery_shop
+from close_guard import UniformUiScale
 
 ROOT = Path(__file__).resolve().parent
 
@@ -67,6 +68,7 @@ class DesktopApi:
         self._updates.install_failed = self._update_failed
         self._blue = blue_tickets.BlueStore(self._root)
         self._allow_close = False
+        self._ui_scale = UniformUiScale(preferences_file=self._root / 'data/ui-scale.json')
         self._proxies = proxy_support.ProxyStore(self._root)
         self._note('Vue 桌面版已就绪，原有角色、分组和排列方案已保留。')
 
@@ -131,6 +133,14 @@ class DesktopApi:
                 return {'ok':True,'data':{'accepted':accepted,'version':version}}
         except Exception as error:return {'ok':False,'error':str(error)}
 
+    def ui_scale(self, action='status', payload=None):
+        try:
+            with self._lock:
+                if action=='settings':return {'ok':True,'data':self._ui_scale.configure(payload)}
+                if action!='status':raise ValueError('界面缩放操作无效')
+                return {'ok':True,'data':self._ui_scale.status}
+        except Exception as error:return {'ok':False,'error':str(error)}
+
     def snapshot(self):
         with self._lock:
             cfg = self._config()
@@ -145,7 +155,7 @@ class DesktopApi:
                         self._launch_status[key]={**self._launch_status.get(key,{}),'phase':'failed','error':route.get('message') or '代理组件异常，角色已关闭，请检查代理后重试'}
                     elif route.get('phase')=='cancelled':
                         self._launch_status[key]={**self._launch_status.get(key,{}),'phase':'cancelled','error':''}
-            return {'config': cfg, 'states': states, 'devices': devices, 'screens': window_layout.screens(), 'logs': self._logs,
+            return {'config': cfg, 'ui_scale': self._ui_scale.status, 'states': states, 'devices': devices, 'screens': window_layout.screens(), 'logs': self._logs,
                     'proxies': self._proxies.public(), 'proxy_engine': {'ready': True, 'backend': cfg.get('proxy_backend','builtin'), 'laoyu_port': cfg.get('laoyu_port',22999), 'laoyu_hidden': self._proxies.hidden_laoyu(cfg.get('laoyu_port',22999)), 'mode': 'tcp', 'capacity': None if cfg.get('proxy_backend')=='laoyu' else 1, 'message': '由老鱼专业版执行代理，线路和进程绑定在启动前确认' if cfg.get('proxy_backend')=='laoyu' else '内置 TCP 代理：同时支持 1 个代理角色，DNS 接管未启用', 'trial': self._proxy_trial_status(), 'routes': routes}, 'launches': copy.deepcopy(self._launch_status), 'updates': self._updates.status(), 'version': 'v'+json.loads((ROOT/'brand.json').read_text(encoding='utf-8'))['version'], 'source_root': str(pinganzhi_sync.default_root())}
 
     def update(self, action='status', payload=None):
@@ -493,6 +503,7 @@ class DesktopApi:
                     rows=[row for row in rows if row['id']==target]
                     if len(rows)!=1:raise ValueError('所选窗口已关闭或重启，请刷新窗口列表后重试')
                 results=[]
+                catalog=json.loads((ROOT/'servers.json').read_text(encoding='utf-8'))['servers']
                 def fetch(row):return bounty_transport.read_checklist(row['pid'],int(row['stamp']),self._app.process_stamp,ROOT/'hardware/checklist-reader/checklist_agent.dll')
                 for row,doc,error in bounty_transport.read_windows(rows,fetch):
                     try:
@@ -500,7 +511,6 @@ class DesktopApi:
                         identity=doc['role']
                         if selected_role and str(identity['server_id'])+':'+str(identity['short_id'])!=selected_role:raise ValueError('窗口角色已变化，请重试；原记录已保留')
                         role_reader.parse_identity([[identity['short_id'],identity['server_id'],identity['nickname'],1]],[])
-                        catalog=json.loads((ROOT/'servers.json').read_text(encoding='utf-8'))['servers']
                         identity['server']=next((x['name'] for x in catalog if str(x['id'])==str(identity['server_id'])),'区服待识别')
                         evidence=doc.get('_guild_boss_evidence',{})
                         if 'd9' not in doc.get('observations',{}) and evidence:
@@ -509,14 +519,19 @@ class DesktopApi:
                             detail='本周已完成 · 伤害 '+format(evidence['damage'],',')
                             if type(evidence.get('rank')) is int and evidence['rank']>0:detail+=' · 第 '+str(evidence['rank'])+' 名'
                             role_key=str(identity['server_id'])+':'+str(identity['short_id'])
-                            previous=next((t for rr in store.load()['roles'] if rr['key']==role_key for t in rr['tasks'] if t['id']=='d9'),None)
+                            with store.connect() as db:
+                                prior=db.execute('SELECT source,status,detail FROM observations WHERE role=? AND task=? AND bucket=?',(role_key,'d9',task_checklist.bucket('weekly'))).fetchone()
+                            previous=dict(zip(('source','status','detail'),prior)) if prior else None
                             if previous and previous['source']=='auto' and previous['status']=='done' and previous['detail']==detail:
                                 doc['observations']['d9']={'status':'done','detail':detail}
                             else:doc['_support_refresh_warning']='已查到退治战绩，但场次日期未核实，保留原记录'
+                        doc['_read_window']=row['id']
                         store.save(doc)
                         result={'title':row['title'],'count':len(doc.get('observations',{})),'missing':len(task_checklist.SUPPORTED)-len(doc.get('observations',{})),'warning':doc.get('_support_refresh_warning','')}
                         results.append(result)
-                    except Exception as e:results.append({'title':row['title'],'error':str(e)})
+                    except Exception as e:
+                        store.record_read_failure(window=row['id'],role=selected_role,error=str(e))
+                        results.append({'title':row['title'],'error':str(e)})
                 return {'ok':True,'data':{'results':results}}
             elif action!='load':raise ValueError('操作无效')
             return {'ok':True,'data':store.load()}
@@ -575,17 +590,25 @@ class DesktopApi:
                 if self._shop_store is None:
                     self._shop_store = mystery_shop.ShopStore(self._root, self._app)
                 store = self._shop_store
-                if action == 'read':
+                if action in ('read','read_bonds'):
                     if self._mail_reading or self._bounty_reading or self._shop_reading:
                         raise ValueError('已有游戏数据读取任务，请等待完成')
                     self._shop_reading = True
                     reading = True
+            def decorated(data):
+                data.update(store.main_settings(self._roles(),group_names=self._config().get('groups',[])))
+                return data
+            if action == 'read_bonds':
+                return {'ok':True,'data':decorated(store.read_main_bonds(p.get('key')))}
+            if action == 'mains':
+                store.main_settings(self._roles(),p.get('keys'),group_names=self._config().get('groups',[]))
+                return {'ok':True,'data':decorated(store.load())}
             if action == 'load':
-                return {'ok': True, 'data': store.load()}
+                return {'ok': True, 'data': decorated(store.load())}
             if action == 'windows':
                 return {'ok': True, 'data': store.windows()}
             if action == 'read':
-                return {'ok': True, 'data': store.read(p.get('target', 'all'))}
+                return {'ok': True, 'data': decorated(store.read(p.get('target', 'all')))}
             raise ValueError('神秘商店操作无效')
         except Exception as error:
             return {'ok': False, 'error': str(error)}
@@ -686,11 +709,19 @@ class DesktopApi:
     def blue_mail(self, action='list', payload=None):
         p=payload or {}
         try:
+            expected_scope=None
+            if action=='read_role':
+                if p.get('confirm') is not True:raise ValueError('请确认临时只读读取')
+                expected_scope=self._blue.mail_archive_scope(p.get('role_id',''))
+                row=task_checklist.running_role_window(self._app,expected_scope,ROOT)
+                p={**p,'pid':row['pid'],'stamp':str(row['stamp'])}
+                action='read'
             if action=='read_all':return {'ok':True,'data':self._read_all_mail(p)}
             with self._lock:
                 if self._updating:raise ValueError('正在安装更新，请稍后再试')
                 if action=='status':return {'ok':True,'data':copy.deepcopy(self._mail_batch_progress)}
                 if action=='archives':return {'ok':True,'data':self._blue.mail_archives(self._roles())}
+                if action=='groups':return {'ok':True,'data':self._blue.mail_group(p,self._roles())}
                 if action=='records':return {'ok':True,'data':self._blue.mail_records(self._roles())}
                 if action=='list':
                     rows=[]
@@ -714,6 +745,10 @@ class DesktopApi:
                 self._mail_reading=True
             try:
                 envelope=self._mail_server_name(mail_reader.read(pid,stamp,self._app.process_stamp,ROOT/'hardware/mail-reader/mail_agent.dll'))
+                if expected_scope:
+                    identity=envelope.get('role',{})
+                    scope=str(identity.get('server_id'))+':'+str(identity.get('short_id'))
+                    if scope!=expected_scope:raise ValueError('窗口角色已变化，本次未保存，请重试')
                 with self._lock:
                     result=self._blue.import_mail(envelope,p.get('revision'),self._roles(),project_blue=True,standalone=True)
                 return {'ok':True,'data':result}

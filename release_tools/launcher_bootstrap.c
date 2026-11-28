@@ -32,6 +32,8 @@ int WINAPI wWinMain(HINSTANCE instance,HINSTANCE previous,LPWSTR args,int show) 
         MessageBoxW(NULL,L"无法启动内置运行环境，请确认文件已完整解压且目录可读取。",L"启动失败",MB_OK|MB_ICONERROR);
         return 4;
     }
+    /* Forward the foreground permission from the user-launched EXE. */
+    AllowSetForegroundWindow(process.dwProcessId);
     CloseHandle(process.hThread);
     WaitForSingleObject(process.hProcess,INFINITE);
     DWORD status=0;GetExitCodeProcess(process.hProcess,&status);CloseHandle(process.hProcess);

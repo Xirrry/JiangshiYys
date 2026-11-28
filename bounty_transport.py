@@ -5,7 +5,7 @@ import threading,uuid,json
 from pathlib import Path
 
 def read(pid, expected_stamp, stamp_fn, dll, flags=4):
-    if flags not in (4,8,16,32):raise ValueError("Unsupported read selection")
+    if flags not in (4,8,16,32,64,128):raise ValueError("Unsupported read selection")
     if not expected_stamp or stamp_fn(pid)!=expected_stamp:
         raise ValueError('游戏窗口已变化，请刷新后重试')
     dll=Path(dll).resolve()
@@ -160,13 +160,26 @@ def read_checklist(pid, expected_stamp, stamp_fn, dll):
             if not ready:document['_support_refresh_warning'] = document.get('_support_refresh_warning','') + '；千物宝库本次未更新，保留原记录'
         except Exception:document['_support_refresh_warning'] = document.get('_support_refresh_warning','') + '；重要商店本次未更新，保留原记录'
         return document
-    deadline = time.monotonic() + 6
+    started_wait = time.monotonic()
+    deadline = started_wait + 6
+    prayer_deadline = started_wait + 1.2
     while True:
+        # Only poll request readiness; build the full task snapshot once.
+        probe = read(pid, expected_stamp, stamp_fn, dll, 64)
+        checks=[probe.get(key,{}) for key in ('_support_query','_prayer_query','_boss_query','_gve_query','_resource_query','_mentor_query','_kirin_query','_banquet_query')]
+        matched=bool(request and all(q.get('nonce')==request['nonce'] and q.get('role')==request.get('role') for q in checks))
+        ready=matched and all(q.get('ready') is True for q in checks)
+        prayer_delayed=bool(matched and all(q.get('ready') is True for index,q in enumerate(checks) if index!=1) and not checks[1].get('ready') and time.monotonic()>=prayer_deadline)
+        support_matched=bool(request and checks[0].get('nonce')==request['nonce'] and checks[0].get('role')==request.get('role'))
+        if not (ready or prayer_delayed or error or not support_matched or any(q.get('expired') for q in checks) or time.monotonic()>=deadline):
+            time.sleep(.15)
+            continue
         document = read(pid, expected_stamp, stamp_fn, dll, 32)
         state = document.pop('_support_query', {})
         same = bool(request and state.get('nonce') == request['nonce'] and state.get('role') == request.get('role'))
         prayer = document.pop('_prayer_query', {})
         prayer_ready = bool(request and prayer.get('nonce') == request['nonce'] and prayer.get('role') == request.get('role') and prayer.get('ready'))
+        if not prayer_ready:document.get('observations',{}).pop('d1',None)
         boss = document.pop('_boss_query', {})
         boss_ready = bool(request and boss.get('nonce') == request['nonce'] and boss.get('role') == request.get('role') and boss.get('ready'))
         gve = document.pop('_gve_query', {})
@@ -191,8 +204,9 @@ def read_checklist(pid, expected_stamp, stamp_fn, dll):
             return finish(document)
         if not (same and state.get('ready') is True):
             document.get('observations', {}).pop('d10', None)
-        if error or not same or state.get('expired') or time.monotonic() >= deadline:
-            document['_support_refresh_warning'] = '协战未获取到本次最新响应，保留原记录' + ('：'+error if error else '')
+        if ready or prayer_delayed or error or not same or state.get('expired') or time.monotonic() >= deadline:
+            document['_support_refresh_warning'] = ('协战未获取到本次最新响应，保留原记录' + ('：'+error if error else '')) if not (same and state.get('ready') is True) else ''
+            if not prayer_ready:document['_support_refresh_warning'] += '；好友祈愿本次未及时响应，沿用原记录'
             if not gve_ready:document['_support_refresh_warning'] += '；阴界之门未获取到最新响应，保留原记录'
             if not resource_ready:document['_support_refresh_warning'] += '；经验/金币妖怪未获取到最新响应，保留原记录'
             if not kirin_ready:document['_support_refresh_warning'] += '；麒麟未获取到最新个人数据，保留原记录'

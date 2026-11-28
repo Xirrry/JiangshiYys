@@ -27,3 +27,23 @@ html:has(>.workspace-document),html:has(.workspace-document){height:100%;overflo
 .workspace-document .page-help,.workspace-document #errors{flex:none;max-height:95px;overflow:auto}
 .workspace-document main>.hint{flex:none;max-height:75px;overflow:auto;margin-top:12px;padding-top:8px}
 .workspace-document #records>.empty{margin:0}
+
+.workspace-header>.workspace-actions{background:transparent!important;border:0!important;padding:0!important;margin-top:0!important;margin-bottom:0!important}.workspace-header .workspace-actions select{min-width:140px;max-width:230px}
+
+/* Tighten spacing before reducing native page zoom on limited logical desktops. */
+:root[data-ui-density=compact] .sidebar{width:148px!important;padding:20px 10px!important}
+:root[data-ui-density=compact] .sidebar .brand{margin-bottom:24px}
+:root[data-ui-density=compact] .sidebar .nav-item{padding:10px 11px;gap:9px}
+:root[data-ui-density=compact] .shell>.main{margin-left:148px!important;padding:20px 18px!important}
+:root[data-ui-density=compact] .workspace-page{padding:16px!important}
+:root[data-ui-density=compact] .workspace-document{padding:16px!important}
+:root[data-ui-density=compact] .workspace-header{margin-bottom:14px!important;gap:12px!important}
+:root[data-ui-density=compact] .workspace-filters{padding:12px!important;gap:8px!important}
+:root[data-ui-density=compact] .card{padding:16px}
+
+/* Native desktop zoom is fixed per monitor; resize only changes content space. */
+:root[data-ui-adapted=true]{--launcher-sidebar-width:168px}
+:root[data-ui-adapted=true][data-ui-density=compact]{--launcher-sidebar-width:148px}
+:root[data-ui-adapted=true] .sidebar{width:var(--launcher-sidebar-width)!important}
+:root[data-ui-adapted=true] .shell>.main{margin-left:var(--launcher-sidebar-width)!important}
+:root[data-ui-adapted=true] .workspace-header h1{font-size:25px!important}

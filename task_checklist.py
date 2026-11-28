@@ -57,6 +57,8 @@ class ChecklistStore:
    db.execute('CREATE TABLE IF NOT EXISTS checklist_groups(id TEXT PRIMARY KEY,name TEXT,collapsed INTEGER DEFAULT 0)')
    db.execute('CREATE TABLE IF NOT EXISTS checklist_members(role TEXT PRIMARY KEY,group_id TEXT)')
    db.execute('CREATE TABLE IF NOT EXISTS checklist_ui(key TEXT PRIMARY KEY,value INTEGER)')
+   db.execute('CREATE TABLE IF NOT EXISTS checklist_group_order(group_id TEXT PRIMARY KEY,position INTEGER NOT NULL)')
+   db.executemany('INSERT OR IGNORE INTO checklist_group_order VALUES(?,?)',[(key,index) for index,key in enumerate(self._group_ids(db))])
    db.execute('CREATE TABLE IF NOT EXISTS checklist_hidden_roles(role TEXT PRIMARY KEY)')
    db.execute('CREATE TABLE IF NOT EXISTS checklist_role_order(role TEXT PRIMARY KEY,position INTEGER NOT NULL)')
    db.execute('CREATE TABLE IF NOT EXISTS last_week_storage(role TEXT,task TEXT,week TEXT,saved INTEGER,received INTEGER,at TEXT,PRIMARY KEY(role,task,week))')
@@ -67,6 +69,7 @@ class ChecklistStore:
    db.execute('CREATE TABLE IF NOT EXISTS realm_card_monitor(role TEXT PRIMARY KEY,start REAL,end REAL,label TEXT)')
    db.execute('CREATE TABLE IF NOT EXISTS foster_monitor(role TEXT PRIMARY KEY,start REAL,end REAL,target TEXT)')
    db.execute('CREATE TABLE IF NOT EXISTS task_parts(role TEXT,task TEXT,bucket TEXT,payload TEXT,PRIMARY KEY(role,task,bucket))')
+   db.execute('CREATE TABLE IF NOT EXISTS checklist_reads(role TEXT PRIMARY KEY,at TEXT,updated TEXT,window_id TEXT,error TEXT)')
    db.execute('CREATE TABLE IF NOT EXISTS detections(role TEXT PRIMARY KEY,at TEXT)')
    db.executescript('CREATE TABLE IF NOT EXISTS roles(key TEXT PRIMARY KEY,payload TEXT);CREATE TABLE IF NOT EXISTS prefs(role TEXT,task TEXT,enabled INTEGER,PRIMARY KEY(role,task));CREATE TABLE IF NOT EXISTS observations(role TEXT,task TEXT,bucket TEXT,status TEXT,source TEXT,detail TEXT,at TEXT,PRIMARY KEY(role,task,bucket));')
    db.execute("UPDATE observations SET status='active',detail='已发起祈愿，碎片到账尚待核实' WHERE task='d1' AND source='auto' AND status='done' AND detail='已发起碎片祈愿'")
@@ -76,6 +79,12 @@ class ChecklistStore:
   try:
    with db:yield db
   finally:db.close()
+ def _group_ids(self,db):
+  ids=[row[0] for row in db.execute('SELECT id FROM checklist_groups ORDER BY rowid')]+['']
+  saved=dict(db.execute('SELECT group_id,position FROM checklist_group_order'))
+  return sorted(ids,key=lambda key:saved.get(key,10**9))
+ def _save_group_order(self,db,ids):
+  db.executemany('INSERT OR REPLACE INTO checklist_group_order VALUES(?,?)',[(key,index) for index,key in enumerate(ids)])
  def register(self,roles):
   with self.connect() as db:
    for r in roles:
@@ -96,9 +105,15 @@ class ChecklistStore:
    groups=[{'id':g[0],'name':g[1],'collapsed':bool(g[2])} for g in db.execute('SELECT id,name,collapsed FROM checklist_groups ORDER BY rowid')]
    default=db.execute("SELECT value FROM checklist_ui WHERE key='ungrouped_collapsed'").fetchone()
    groups.append({'id':'','name':'未分组','collapsed':bool(default and default[0])})
+   group_order={key:index for index,key in enumerate(self._group_ids(db))}
+   groups.sort(key=lambda group:group_order[group['id']])
    members=dict(db.execute('SELECT role,group_id FROM checklist_members'))
    defaults=dict(db.execute('SELECT task,priority FROM checklist_task_defaults'))
    for role in roles:
+    read=db.execute('SELECT at,updated,error FROM checklist_reads WHERE role=?',(role['key'],)).fetchone()
+    role['read_at']=read[0] if read else ''
+    role['read_error']=read[2] if read else ''
+    updated=set(json.loads(read[1])) if read else set()
     role['group_id']=members.get(role['key'],'')
     prefs=dict(db.execute('SELECT task,enabled FROM prefs WHERE role=?',(role['key'],)))
     priorities=dict(db.execute('SELECT task,priority FROM task_priorities WHERE role=?',(role['key'],)))
@@ -109,9 +124,13 @@ class ChecklistStore:
      parts=db.execute('SELECT payload FROM task_parts WHERE role=? AND task=? AND bucket=?',(role['key'],t['id'],b)).fetchone()
      foster=db.execute('SELECT start,end,target FROM foster_monitor WHERE role=?',(role['key'],)).fetchone() if t['id']=='d4' else None
      role['tasks'].append({**t,'priority':priorities.get(t['id'],defaults.get(t['id'],'normal')),'enabled':bool(prefs.get(t['id'],1)),'status':row[0] if row else 'unknown','source':row[1] if row else '', 'parts':json.loads(parts[0]) if parts and row and row[1]=='auto' else [],'support':t['id'] in SUPPORTED,'detail':row[2] if row else ('当前周期暂无有效数据' if t['id'] in SUPPORTED else '尚未接入自动检测'),'at':row[3] if row else ''})
-     role['tasks'][-1]['available']=datetime.now(TZ).weekday() in ({'d7':(4,5,6),'guild_kirin':(0,1,2,3)}.get(t['id'],range(7)))
+     task=role['tasks'][-1]
+     task['read_at']=role['read_at']
+     task['freshness']='manual' if task['source']=='manual' else ('failed' if role['read_error'] else 'fresh' if read and t['id'] in updated else 'retained') if row else 'missing' if task['support'] else 'unsupported'
+     role['tasks'][-1]['available']=datetime.now(TZ).weekday() in ({'d7':(4,5,6),'guild_kirin':(0,1,2,3),'d9':(5,)}.get(t['id'],range(7)))
+     if t['id']=='d9' and row and row[0] in ('done','claimable'):role['tasks'][-1]['available']=True
      if not role['tasks'][-1]['available']:
-      role['tasks'][-1].update(status='unavailable',detail=('周一至周四开放' if t['id']=='guild_kirin' else '周五至周日开放')+' · 今日未开放')
+      role['tasks'][-1].update(status='unavailable',detail=('周六开放' if t['id']=='d9' else '周一至周四开放' if t['id']=='guild_kirin' else '周五至周日开放')+' · 今日未开放')
      elif t['id']=='guild_kirin' and not row:role['tasks'][-1]['detail']='周一至周四开放 · 当前周期暂无有效个人数据'
      stored=db.execute('SELECT saved,received,at FROM last_week_storage WHERE role=? AND task=? AND week=?',(role['key'],t['id'],bucket('weekly'))).fetchone()
      if stored:role['tasks'][-1]['storage']={'saved':stored[0],'received':stored[1],'remaining':stored[0]-stored[1],'week':bucket('weekly'),'at':stored[2]}
@@ -207,6 +226,30 @@ class ChecklistStore:
     if not isinstance(role,str) or not db.execute('SELECT 1 FROM roles WHERE key=?',(role,)).fetchone():raise ValueError('角色档案不存在')
     if action=='hide_role':db.execute('INSERT OR IGNORE INTO checklist_hidden_roles VALUES(?)',(role,))
     else:db.execute('DELETE FROM checklist_hidden_roles WHERE role=?',(role,))
+   elif action=='group_move':
+    target=p.get('before');after=p.get('after',False)
+    ids=self._group_ids(db)
+    if 'id' not in p or not isinstance(group,str) or not isinstance(target,str) or group not in ids or target not in ids:raise ValueError('分组列表已变化，请刷新后重新排序')
+    if type(after) is not bool:raise ValueError('排序位置无效')
+    if group!=target:
+     ids.remove(group);ids.insert(ids.index(target)+int(after),group);self._save_group_order(db,ids)
+   elif action=='move_role':
+    if not isinstance(group,str):raise ValueError('分组无效')
+    if group:exists()
+    role=p.get('role');anchor=p.get('anchor');after=p.get('after',False)
+    if type(after) is not bool:raise ValueError('排序位置无效')
+    rows=db.execute("SELECT r.key,COALESCE(m.group_id,'') FROM roles r LEFT JOIN checklist_members m ON m.role=r.key LEFT JOIN checklist_role_order o ON o.role=r.key WHERE r.key NOT IN (SELECT role FROM checklist_hidden_roles) AND r.key IN (SELECT role FROM detections UNION SELECT role FROM observations WHERE source='auto') ORDER BY COALESCE(o.position,1000000000),r.key").fetchall()
+    members=dict(rows);order=[key for key,_ in rows]
+    if role not in members:raise ValueError('角色列表已变化，请刷新')
+    if anchor is not None and (anchor not in members or anchor==role or members[anchor]!=group):raise ValueError('目标角色或分组已变化，请重试')
+    order.remove(role)
+    if anchor is not None:index=order.index(anchor)+int(after)
+    else:
+     positions=[index for index,key in enumerate(order) if members[key]==group]
+     index=positions[-1]+1 if positions else len(order)
+    order.insert(index,role)
+    db.execute('INSERT OR REPLACE INTO checklist_members VALUES(?,?)',(role,group))
+    db.executemany('INSERT OR REPLACE INTO checklist_role_order VALUES(?,?)',[(key,index) for index,key in enumerate(order)])
    elif action=='reorder':
     order=p.get('roles')
     known={row[0] for row in db.execute("SELECT key FROM roles WHERE key NOT IN (SELECT role FROM checklist_hidden_roles) AND key IN (SELECT role FROM detections UNION SELECT role FROM observations WHERE source='auto')")}
@@ -217,7 +260,10 @@ class ChecklistStore:
     if not isinstance(name,str) or not name.strip() or len(name.strip())>30 or name.strip()=='未分组':raise ValueError('请输入1至30字的分组名称')
     name=name.strip()
     if db.execute('SELECT 1 FROM checklist_groups WHERE name=? AND id!=?',(name,group if action=='rename' else '')).fetchone():raise ValueError('分组名称已存在')
-    if action=='create':db.execute('INSERT INTO checklist_groups(id,name) VALUES(?,?)',(uuid.uuid4().hex,name))
+    if action=='create':
+     ids=self._group_ids(db);created=uuid.uuid4().hex
+     db.execute('INSERT INTO checklist_groups(id,name) VALUES(?,?)',(created,name))
+     ids.insert(ids.index(''),created);self._save_group_order(db,ids)
     else:exists();db.execute('UPDATE checklist_groups SET name=? WHERE id=?',(name,group))
    elif action=='assign':
     if group:exists()
@@ -225,7 +271,7 @@ class ChecklistStore:
     if not db.execute('SELECT 1 FROM roles WHERE key=?',(role,)).fetchone():raise ValueError('角色不存在')
     db.execute('INSERT OR REPLACE INTO checklist_members VALUES(?,?)',(role,group))
    elif action=='remove':
-    exists();db.execute("UPDATE checklist_members SET group_id='' WHERE group_id=?",(group,));db.execute('DELETE FROM checklist_groups WHERE id=?',(group,))
+    exists();db.execute("UPDATE checklist_members SET group_id='' WHERE group_id=?",(group,));db.execute('DELETE FROM checklist_groups WHERE id=?',(group,));db.execute('DELETE FROM checklist_group_order WHERE group_id=?',(group,))
    elif action in ('toggle','collapse_all'):
     collapsed=p.get('collapsed')
     if type(collapsed) is not bool:raise ValueError('折叠状态无效')
@@ -252,14 +298,15 @@ class ChecklistStore:
     db.execute('INSERT OR REPLACE INTO observations VALUES(?,?,?,?,?,?,?)',(role,task,b,p['status'],'manual','手动确认',datetime.now(TZ).isoformat(timespec='seconds')))
  def save(self,document):
   r=document['role'];self.register([r]);key=str(r['server_id'])+':'+str(r['short_id'])
+  read_at=datetime.now(TZ).isoformat(timespec='microseconds');accepted=[]
   with self.connect() as db:
-   db.execute('INSERT OR REPLACE INTO detections VALUES(?,?)',(key,datetime.now(TZ).isoformat(timespec='seconds')))
+   db.execute('INSERT OR REPLACE INTO detections VALUES(?,?)',(key,read_at))
    stored=document.get('_last_week_storage',{})
    if isinstance(stored,dict):
     for task,value in stored.items():
      if task not in ('w18','guild_banquet','d9','d7') or not isinstance(value,dict):continue
      saved=value.get('saved');received=value.get('received')
-     if type(saved) is int and type(received) is int and 0<=received<=saved<=10:db.execute('INSERT OR REPLACE INTO last_week_storage VALUES(?,?,?,?,?,?)',(key,task,bucket('weekly'),saved,received,datetime.now(TZ).isoformat(timespec='seconds')))
+     if type(saved) is int and type(received) is int and 0<=received<=saved<=10:db.execute('INSERT OR REPLACE INTO last_week_storage VALUES(?,?,?,?,?,?)',(key,task,bucket('weekly'),saved,received,read_at))
    for task,value in document.get('observations',{}).items():
     if task not in IDS or value.get('status') not in ('todo','done','claimable','active','fostering','home','card_running','card_expired','cooldown','occupied','ready','inactive','progressing','target_met'):continue
     t=next(x for x in CATALOG if x['id']==task);b='monitor' if t.get('monitor') else 'lifetime' if t['lifetime'] else bucket(t['period'])
@@ -286,15 +333,45 @@ class ChecklistStore:
       prior=db.execute('SELECT start,end,label FROM realm_card_monitor WHERE role=?',(key,)).fetchone()
       if prior and 0<prior[1]<=datetime.now(TZ).timestamp():meta={'start':prior[0],'end':prior[1],'label':prior[2]}
      db.execute('INSERT OR REPLACE INTO realm_card_monitor VALUES(?,?,?,?)',(key,meta.get('start',0),meta['end'],str(meta.get('label') or '结界卡')))
+    # A consumed weekly reward quota cannot become unconsumed inside the same week.
+    if task=='w17':
+     prior=db.execute('SELECT status,source FROM observations WHERE role=? AND task=? AND bucket=?',(key,task,b)).fetchone()
+     if prior and prior==('done','auto') and value['status']!='done':continue
+    if task=='d1' and isinstance(value.get('parts'),list):
+     value=dict(value)
+     previous=db.execute('SELECT payload FROM task_parts WHERE role=? AND task=? AND bucket=?',(key,task,b)).fetchone()
+     old={part['name']:part for part in json.loads(previous[0])} if previous else {}
+     merged=[]
+     for incoming in value['parts']:
+      if not isinstance(incoming,dict):continue
+      before=old.get(incoming.get('name'))
+      if before and (before.get('status')=='done' or incoming.get('status')=='unknown' and before.get('status') in ('active','todo')):
+       merged.append(before)
+      else:merged.append(incoming)
+     value['parts']=merged
+     states=[part.get('status') for part in merged]
+     value['status']='done' if len(states)==2 and all(x=='done' for x in states) else 'active' if any(x in ('active','done') for x in states) else 'todo' if len(states)==2 and all(x=='todo' for x in states) else 'unknown'
     detail=str(value.get('detail',''))
     if task=='d2' and value['status']=='done' and detail=='今日已领取，金额未读到':
      prior=db.execute('SELECT detail FROM observations WHERE role=? AND task=? AND bucket=? AND source=? AND status=?',(key,task,b,'auto','done')).fetchone()
      if prior and prior[0].startswith('今日已领取资金 '):detail=prior[0]
-    db.execute('INSERT OR REPLACE INTO observations VALUES(?,?,?,?,?,?,?)',(key,task,b,value['status'],'auto',detail,datetime.now(TZ).isoformat(timespec='seconds')))
+    db.execute('INSERT OR REPLACE INTO observations VALUES(?,?,?,?,?,?,?)',(key,task,b,value['status'],'auto',detail,read_at))
+    accepted.append(task)
 
     if task=='d1' and isinstance(value.get('parts'),list):
      parts=[{k:v for k,v in part.items() if k in ('name','status','detail','current','target','hero_name')} for part in value['parts'] if isinstance(part,dict) and part.get('name') in ('寮祈愿','好友祈愿') and part.get('status') in ('unknown','todo','active','done')]
      db.execute('INSERT OR REPLACE INTO task_parts VALUES(?,?,?,?)',(key,task,b,json.dumps(parts,ensure_ascii=False)))
+
+   previous=db.execute('SELECT window_id FROM checklist_reads WHERE role=?',(key,)).fetchone()
+   window=document.get('_read_window') or (previous[0] if previous else '')
+   if window:db.execute("UPDATE checklist_reads SET window_id='' WHERE window_id=? AND role!=?",(window,key))
+   db.execute('INSERT OR REPLACE INTO checklist_reads VALUES(?,?,?,?,?)',(key,read_at,json.dumps(accepted),window,''))
+
+ def record_read_failure(self,window='',role=None,error='读取失败'):
+  with self.connect() as db:
+   keys=[role] if role else [row[0] for row in db.execute('SELECT role FROM checklist_reads WHERE window_id=?',(window,))] if window else []
+   for key in keys:
+    db.execute('INSERT OR REPLACE INTO checklist_reads VALUES(?,?,?,?,?)',(key,datetime.now(TZ).isoformat(timespec='microseconds'),'[]',window,str(error)))
 
  def foster_reminders(self):
   with self.connect() as db:

@@ -68,7 +68,7 @@ try:
  defs=getattr(getattr(mod,'param_def',None) or sys.modules.get('com.param_def'),'ParamNameDef',None)
  logic=getattr(mod,'GuildLogic',None) or sys.modules.get('module.guild.GuildLogic')
  if type(prayer) is int and prayer==0:guild.update(status='todo',detail='尚未发起')
- if type(prayer) is int and prayer==2:
+ if type(prayer) is int and prayer in (1,2):
   guild.update(status='active',detail='已发起，当天获赠进度尚未加载')
   if defs is not None:
    try:guild=part('寮祈愿',p.entity_get_param(defs.GUILD_BEG_REWARD))
@@ -90,8 +90,16 @@ try:
  prayer_query=getattr(Globals,'_yys_checklist_prayer_query',{})
  result['_prayer_query']={k:prayer_query.get(k) for k in ('nonce','role','ready','expired')}
  if prayer_query.get('role')==str(p.server_id)+':'+str(p.short_id) and prayer_query.get('ready') and not prayer_query.get('expired'):
-  friend=part('好友祈愿',prayer_query.get('row'))
-  if prayer_query.get('row') is None:friend={'name':'好友祈愿','status':'todo','detail':'尚未发起'}
+  if prayer_query.get('row') is not None:friend=part('好友祈愿',prayer_query.get('row'))
+  if prayer_query.get('row') is None and friend['status']=='unknown':friend={'name':'好友祈愿','status':'unknown','detail':'列表无本人祈愿记录，不能区分未发起或已收满'}
+ # Starting a shard prayer creates both guild and friend requests. The fresh
+ # server friend list removes a request once its quota is filled. An absent
+ # row alone is insufficient; require this character's daily initiation too.
+ if friend['status']=='unknown' and prayer_query.get('row') is None and prayer_query.get('ready') and not prayer_query.get('expired') and prayer_query.get('role')==str(p.server_id)+':'+str(p.short_id) and type(prayer) is int and prayer in (1,2):
+  friend={'name':'好友祈愿','status':'done','detail':'当日已发起祈愿，最新列表确认好友祈愿已收满'}
+  if guild.get('hero_name'):friend['hero_name']=guild['hero_name']
+  target=guild.get('target')
+  if type(target) is int and target>0:friend.update(current=target,target=target)
  parts=[guild,friend]
  state='done' if all(x['status']=='done' for x in parts) else 'active' if any(x['status'] in ('active','done') for x in parts) else 'todo' if all(x['status']=='todo' for x in parts) else 'unknown'
  result['observations']['d1']={'status':state,'detail':'分别收满寮祈愿与好友祈愿的当天额度才算完成','parts':parts}
@@ -362,7 +370,7 @@ try:
   raw=table.get(13,table.get('13',{})).get('value')
   limit=int(raw) if type(raw) is int or isinstance(raw,str) and raw.isdigit() else None
   if hasattr(weekly,'get') and type(limit) is int and 0<limit<=10000:
-   used=weekly.get('h13',0)
+   used=weekly.get('h13')
    if type(used) is int and 0<=used<=limit:
     switch=p.entity_get_param('hun13',{})
     off=hasattr(switch,'get') and switch.get('b')==0
@@ -473,12 +481,11 @@ try:
  except Exception:pass
  try:
   earned=getattr(p,'honor_score_this_week',None)
-  score=getattr(p,'pvp_score',None);previous=getattr(p,'last_week_pvp_stage',None)
-  logic=sys.modules.get('com.PvpData')
-  current=logic.score2stage(score) if logic and type(score) in (int,float) else None
+  previous=getattr(p,'last_week_pvp_stage',None)
   cfg=sys.modules.get('DynamicConfigData')
-  if type(earned) is int and earned>=0 and type(current) is int and type(previous) is int and 1<=current<=11 and 0<=previous<=11:
-   stage=max(current,previous)
+  # The weekly honor allowance is based on last week's stage, not this week's climb.
+  if type(earned) is int and earned>=0 and type(previous) is int and 1<=previous<=11:
+   stage=previous
    table_name='DATA_PVP_MASTER' if stage>=10 else 'DATA_PVP'
    table=getattr(getattr(cfg,table_name,None),'data',{})
    row=table.get(stage,table.get(str(stage),{}));limit=row.get('honor_limit')

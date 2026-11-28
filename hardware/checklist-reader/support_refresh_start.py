@@ -40,7 +40,9 @@ try:
  prayer_state={'nonce':state['nonce'],'role':role_key,'ready':False,'expired':False}
  def prayer_received(data,ps=prayer_state,Globals=Globals):
   if ps['expired'] or str(Globals.player1.server_id)+':'+str(Globals.player1.short_id)!=ps['role']:return
-  if not hasattr(data,'get') or data.get('ret')!=0 or data.get('is_global') is not False:return
+  if not hasattr(data,'get') or data.get('ret')!=0:return
+  scope=data.get('is_global')
+  if type(scope) not in (bool,int) or scope!=0:return
   infos=data.get('beg_infos')
   if not hasattr(infos,'items'):return
   own=str(getattr(Globals.player1,'_id',None) or getattr(Globals.player1,'id',None))

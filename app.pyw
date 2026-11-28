@@ -14,8 +14,8 @@ def main():
     global _instance
     _instance = single_instance.Instance()
     if _instance.duplicate:
-        import ctypes
-        ctypes.windll.user32.MessageBoxW(None, '启动器已经打开，请使用已有窗口。不同版本或目录也只允许打开一个。', BRAND['name'], 0x40)
+        _instance.activate_existing(legacy_title=BRAND['name'])
+        _instance.close()
         return
     import msvcrt
     def stage(name):
@@ -42,7 +42,9 @@ def main():
         lock.seek(0)
         msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
     except OSError:
-        ctypes.windll.user32.MessageBoxW(None, '启动器已打开，请先关闭旧窗口再启动新版。', '角色启动器', 0)
+        _instance.activate_existing(legacy_title=BRAND['name'])
+        lock.close()
+        _instance.close()
         return
     entry = ROOT / 'frontend/dist/index.html'
     if not entry.is_file():
@@ -67,6 +69,9 @@ def main():
     view = webview.create_window(BRAND['name'] + ' · v' + BRAND['version'], str(entry), js_api=api,
                           **window_memory.options, min_size=minimum, background_color='#f6f2ea',
                           text_select=False)
+    view.events.shown += lambda: _instance.attach(view)
+    ui_scale=api._ui_scale
+    view.events.loaded += lambda: ui_scale.attach(view)
     import threading
     def defer_close(callback):
         def run():
@@ -88,6 +93,7 @@ def main():
     def on_closing():
         accepted = close_guard()
         if accepted:
+            _instance.detach()
             window_memory.capture(view)
         return accepted
     view.events.closing += on_closing
@@ -101,6 +107,7 @@ def main():
             time.sleep(1)
             try:
                 health = view.evaluate_js("({connected:!document.querySelector('.connecting'),layout:!!document.querySelector('.layout-card'),groups:document.querySelectorAll('.account-group').length,width:document.documentElement.clientWidth,dpr:window.devicePixelRatio,font:getComputedStyle(document.body).fontFamily,viewportHeight:innerHeight,pageHeight:document.documentElement.scrollHeight,layoutBottom:document.querySelector('.layout-card')?.getBoundingClientRect().bottom,controlsBottom:document.querySelector('.layout-footer')?.getBoundingClientRect().bottom,horizontalOverflow:document.documentElement.scrollWidth>innerWidth})")
+                health['ui_scale']=ui_scale.status
                 (ROOT / 'desktop-health.json').write_text(json.dumps(health), encoding='utf-8')
                 if health.get('connected') and health.get('layout'):
                     break
@@ -108,9 +115,14 @@ def main():
                 pass
     view.events.loaded += lambda: stage('page-loaded')
     stage('starting-gui')
-    webview.start(on_start, gui='edgechromium', http_server=True, debug=False, private_mode=True, icon=str(ROOT / 'assets/app-icon.ico'))
-    api.close_group_frames()
-    lock.close()
+    try:
+        webview.start(on_start, gui='edgechromium', http_server=True, debug=False, private_mode=True, icon=str(ROOT / 'assets/app-icon.ico'))
+    finally:
+        try:
+            api.close_group_frames()
+        finally:
+            lock.close()
+            _instance.close()
 
 
 if __name__ == '__main__':

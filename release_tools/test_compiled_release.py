@@ -146,5 +146,5 @@ assert {'lanqi_exchange','guild_kirin','guild_banquet','evening_boss'}<=task_che
 rects=window_layout.profile_rectangles(['a','b'],[0,0,1920,1080],{},mode='反向错落',start_x=30,start_y=20,offset_x=100,offset_y=80)
 assert rects['b'][0]-rects['a'][0]==100 and rects['a'][1]-rects['b'][1]==80
 assert (root/'hardware/checklist-reader/checklist_agent.dll').is_file()
-brand=json.loads((root/'brand.json').read_text(encoding='utf-8'));assert brand['version']=='9.57'
+brand=json.loads((root/'brand.json').read_text(encoding='utf-8'));assert brand['version']=='9.58'
 print('PASS: v9.57 compiled consent, checklist ordering/archive restore, new task catalog and diagonal parameters')

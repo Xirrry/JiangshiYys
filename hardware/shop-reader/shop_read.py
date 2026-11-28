@@ -1,4 +1,20 @@
 import sys,json
+def friend_bonds():
+ fd=sys.modules.get('com.FriendData');rows=getattr(fd,'friendDataList',None)
+ if not isinstance(rows,(list,tuple)):return None
+ bonds={}
+ for friend in rows:
+  try:
+   server=getattr(friend,'server_id',None);short=getattr(friend,'short_id',None)
+   level=friend.getIntimacyLevel()
+   if type(level) is not int or not 0<=level<=3:continue
+   entry={'name':str(friend.name),'level':level}
+   uid=str(getattr(friend,'uid',''))
+   if uid and uid.isalnum() and len(uid)<=80:bonds['uid:'+uid]=entry
+   if str(server).isdigit() and str(short).isdigit() and int(short)>0:bonds[str(int(server))+':'+str(int(short))]=entry
+  except Exception:continue
+ return bonds
+
 try:
  import Globals
  def clean(v,depth=0):
@@ -37,7 +53,7 @@ try:
   shops.append({'key':clean(data.get('inter_shop_id')),'own':idx==0,'index':idx,
    'level':obj.get_bought_history_level()[0] if idx==0 else data.get('shop_level'),
    'goods':goods})
- result={'role':{'name':clean(p.name),'short_id':p.short_id,'server_id':p.server_id},
+ result={'role':{'name':clean(p.name),'short_id':p.short_id,'server_id':p.server_id,'uid':str(getattr(p,'_id',None) or getattr(p,'id',''))},
   'flower_names':dict((str(i),clean(m.FriendData.getIntimacyLevelName(i))) for i in range(4)),
   'shops':shops,'seconds_left':obj.get_secret_shop_lefttime(),'shop_count':clean(obj.get_shop_count())}
 except Exception as e:result={'error':str(e)}

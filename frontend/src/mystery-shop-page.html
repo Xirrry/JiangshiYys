@@ -5,56 +5,239 @@
 body[data-view=list] .goods{display:block}body[data-view=list] .good{display:grid;grid-template-columns:minmax(150px,1.5fr) 90px minmax(120px,1fr) minmax(145px,1fr);column-gap:15px;row-gap:5px;min-height:83px;padding:15px 20px;border-bottom:1px solid #dfd1bc;box-shadow:none;border-left:3px solid transparent;align-items:center}body[data-view=list] .good.important{border-left-color:#b88b48}body[data-view=list] .good:last-child{border-bottom:0}body[data-view=list] .name{grid-column:1;grid-row:1;font-size:14px;margin:0;padding:0;min-height:0}body[data-view=list] .qty{grid-column:1;grid-row:2}body[data-view=list] .flower{position:static;grid-column:2;grid-row:1 / 3;font-size:15px}body[data-view=list] .flower small{text-align:left}body[data-view=list] .price{grid-column:3;grid-row:1 / 3;margin:0;font-size:19px}body[data-view=list] .bottom{grid-column:4;grid-row:1 / 3;margin:0;flex-direction:column;gap:7px}body[data-view=list] .shop-head{padding:10px 18px}body[data-view=list] .role{margin-top:18px}@media(max-width:850px){body[data-view=list] .good{grid-template-columns:minmax(120px,1.5fr) 65px 105px minmax(115px,1fr);column-gap:9px;padding:12px}.view-note{line-height:1.6}body[data-view=focus] .flower{top:111px}}
 
 body[data-view=focus] #content{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px;align-items:start;margin:16px 0 24px}body[data-view=focus] .focus-group{margin:0}body[data-view=focus] .goods{display:flex;flex-direction:column}body[data-view=focus] .good{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;padding:16px 18px;min-height:200px}body[data-view=focus] .item-context{grid-column:1 / 3;margin:0 0 4px;padding:0 0 9px;gap:4px}body[data-view=focus] .name{grid-column:1;grid-row:2;padding:0;margin:0;font-size:15px}body[data-view=focus] .qty{grid-column:1;grid-row:3}body[data-view=focus] .flower{position:static;grid-column:2;grid-row:2 / 4;align-self:center;font-size:15px}body[data-view=focus] .price{grid-column:1 / 3;grid-row:4;margin:4px 0 0;font-size:22px}body[data-view=focus] .bottom{grid-column:1 / 3;grid-row:5;margin:2px 0 0}body[data-view=focus] .focus-group[data-group=black-shard] .shop-head,body[data-view=focus] .focus-group[data-group=black-egg] .shop-head{background:#dfd4c7}body[data-view=focus] .focus-group[data-group=blue-ticket] .shop-head{background:#dce4e4}body[data-view=focus] .focus-group[data-group=taiko] .shop-head{background:#e2e4d3}
-</style><body class="workspace-document shop-document"><header class="workspace-header"><div><h1>神秘商店</h1><div class="sub">把值得留意的商品，放在一起看。</div></div><div class="workspace-actions"><button id="refresh-records">刷新记录</button><select id="window" aria-label="游戏窗口"><option value="all">所有运行窗口</option></select> <button id="refresh">刷新窗口</button> <button id="read" class="primary">读取全部窗口</button></div></header>
-<main><div class="toolbar workspace-filters"><input id="search" placeholder="搜索商品名称"><select id="source"><option value="all">全部商店</option><option value="own" selected>自己的商店</option><option value="shared">好友分享</option></select><select id="flowers"><option value="all">全部羁绊</option><option value="0">不限羁绊</option><option value="1">1 花</option><option value="2">2 花</option><option value="3">3 花</option></select><select id="currency"><option value="all">全部币种</option><option value="900002">勾玉</option><option value="900001">金币</option><option value="900000">魂玉</option></select><select id="focus"><option value="all">全部重点类别</option><option value="black-shard">黑碎</option><option value="black-egg">黑蛋</option><option value="blue-ticket">蓝票</option><option value="demon-soul">逢魔之魂</option><option value="reverse-scale">大蛇的逆鳞</option><option value="taiko">太鼓结界卡</option></select><label><input id="important" type="checkbox" style="width:auto"> 仅看重点</label><label><input id="special" type="checkbox" style="width:auto"> 仅特惠</label><label><input id="available" type="checkbox" style="width:auto"> 仅可购买</label></div><div class="view-bar"><div class="view-switch workspace-view-switch" role="group" aria-label="商店视图"><button data-shop-view="cards" aria-pressed="true">▦ 卡片总览</button><button data-shop-view="list" aria-pressed="false">☷ 紧凑列表</button><button data-shop-view="focus" aria-pressed="false">◇ 重点汇总</button></div><span class="view-note" id="view-note"></span></div><div class="status workspace-status" id="status" role="status">读取游戏已加载的商店数据</div><details id="errors" hidden><summary></summary><div></div></details><div id="content"></div><div class="hint">重点道具优先排列：黑碎、黑蛋、蓝票、逢魔之魂、大蛇的逆鳞、太鼓结界卡。太鼓保留原有星级。<br>花朵表示商品要求的羁绊等级；可购买状态按本次游戏读取结果显示，不代表货币余额充足。<br>保留各角色上次成功读取的数据；打开游戏商店后可更新。此页面仅查看，不执行购买。</div></main>
+
+.share-match{grid-column:1/-1;font-size:11px;line-height:1.8;color:#687e5e;overflow-wrap:anywhere;padding-top:8px;border-top:1px solid #e6ddce}body[data-view=focus] .share-match{grid-row:6}
+dialog.main-settings{position:fixed;inset:0;margin:auto;width:min(780px,calc(100vw - 48px));max-width:none;max-height:calc(100dvh - 64px);padding:0;overflow:hidden;border:1px solid #d9cdbb;border-radius:16px;background:#fffcf6;color:#3b413b;box-shadow:0 24px 80px #30291e38;font-size:13px}
+dialog.main-settings[open]{display:flex;flex-direction:column}dialog.main-settings::backdrop{background:#29261f66;backdrop-filter:blur(2px)}
+.workspace-document .main-settings .main-dialog-head{flex:none;padding:22px 26px 18px;background:#fffcf6;border-bottom:1px solid #e7dece;display:flex;align-items:flex-start;gap:20px}.main-dialog-head h2{margin:0 0 7px;font-size:20px;font-weight:600;color:#3b413b}.main-dialog-head p{margin:0;color:#897c69;font-size:12px;line-height:1.6}.main-settings .icon-close{width:32px;height:32px;padding:0;flex:none;font-size:21px;line-height:1;border:0;background:transparent;color:#897c69}.main-settings .icon-close:hover{background:#eee8dc}
+.main-dialog-body{overflow:auto;overscroll-behavior:contain;padding:20px 26px;min-height:0}.main-section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 12px}.main-section-title h3{font-size:13px;margin:0;font-weight:600}.main-section-title span{color:#897c69;font-size:12px}.main-readers{display:grid;gap:8px;margin-bottom:22px}.main-reader{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 15px;border:1px solid #e4dac9;border-radius:9px;background:#f6f2e9}.main-reader-info{min-width:0;display:grid;gap:5px}.main-reader-name{font-size:14px;font-weight:600;overflow-wrap:anywhere}.main-reader-name small{font-size:12px;color:#897c69;font-weight:400;margin-left:9px}.main-reader-time{font-size:11px;color:#897c69;line-height:1.6}.main-reader button{flex:none;white-space:nowrap;border-color:#cbd7c9;background:#e8eee4;color:#456052;font-size:12px}.main-readers-empty{padding:16px;border:1px dashed #d9cdbb;border-radius:9px;color:#897c69;line-height:1.8;text-align:center}
+.main-settings #main-search{width:100%;margin:0 0 10px;background:#fffefa}.main-settings #main-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;max-height:230px;overflow:auto;overscroll-behavior:contain;padding-right:4px}.main-settings #main-options label{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid transparent;border-radius:7px;cursor:pointer;min-width:0}.main-settings #main-options label:hover{background:#f2ede2}.main-settings #main-options label:has(:checked){background:#e9eee4;border-color:#d4dfcd}.main-settings input[type=checkbox]{width:15px;height:15px;margin:0;flex:none;accent-color:#456052}.main-candidate-info{display:grid;gap:4px;min-width:0}.main-candidate-info strong{font-weight:400;overflow-wrap:anywhere}.main-candidate-info small{font-size:11px;color:#948674;overflow-wrap:anywhere}
+.main-dialog-footer{flex:none;border-top:1px solid #e7dece;background:#faf7f0;padding:15px 26px;display:flex;justify-content:space-between;align-items:center;gap:16px}.main-dialog-feedback{font-size:12px;color:#897c69;line-height:1.6;min-width:0}.main-dialog-feedback p{margin:0}.main-dialog-feedback #bond-status:empty{display:none}.main-dialog-feedback #bond-status{color:#456052;margin-top:4px}.main-dialog-buttons{display:flex;gap:8px;flex:none}.main-settings button.primary{background:#456052;border-color:#456052;color:#fff}.workspace-filters #open-main-settings{margin:0 0 0 auto;white-space:nowrap;flex:none}.main-settings button:disabled{cursor:wait}
+@media(max-width:650px){dialog.main-settings{width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}.workspace-document .main-settings .main-dialog-head,.main-dialog-body{padding:18px}.main-dialog-footer{padding:14px 18px;flex-wrap:wrap}.main-settings #main-options{grid-template-columns:repeat(2,minmax(0,1fr))}.main-dialog-buttons{margin-left:auto}.main-reader-name small{display:block;margin:4px 0 0}}
+
+.focus-main-control{display:flex;align-items:center;gap:8px;font-size:12px;color:#897c69}.focus-main-control select{max-width:250px;min-width:160px}.focus-main-control[hidden]{display:none}
+body[data-view=focus] .focus-recommendations{grid-column:1/-1;background:#fffcf6;border:1px solid #dfd3bf;border-radius:12px;padding:20px;margin:0 0 8px}.focus-recommendations h2{font-size:17px;margin:0 0 7px}.focus-recommendations>p{font-size:12px;color:#897c69;margin:0 0 18px;line-height:1.7}.focus-money-heading{font-size:13px;margin:18px 0 10px;color:#725c43}.focus-best-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}.focus-best{padding:14px;border:1px solid #e2dacb;border-radius:8px;min-width:0}.focus-best.has-match{border-color:#cad7c5;background:#f0f4ec}.focus-best h4{font-size:13px;margin:0 0 12px;font-weight:600}.focus-best-price{font-size:23px;font-weight:600;color:#456052;margin-bottom:8px}.focus-best-price small{font-size:11px;font-weight:400;margin-left:5px}.focus-best-owner{font-size:12px;line-height:1.7;overflow-wrap:anywhere}.focus-best-note{font-size:11px;color:#897c69;line-height:1.7;margin-top:4px}.focus-best-empty{font-size:12px;color:#998a74;padding:5px 0 10px}.focus-detail-heading{grid-column:1/-1;font-size:14px;margin:6px 0 0}.focus-best-ties{margin-top:7px;font-size:11px;color:#687e5e;line-height:1.7}
+
+#focus-kind-control[hidden]{display:none}#kind-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px;max-height:48vh;overflow:auto}#kind-options label{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #e4dac9;border-radius:8px;cursor:pointer}#kind-options label:has(:checked){background:#e9eee4;border-color:#cbd7c5}#kind-options small{display:block;font-size:11px;color:#897c69;margin-top:5px}.kind-tools{display:flex;gap:8px;flex-wrap:wrap}.kind-tools input{flex:1;min-width:150px}.focus-kind-empty{grid-column:1/-1;color:#897c69;padding:20px;font-size:13px}@media(max-width:650px){#kind-options{grid-template-columns:1fr}}
+
+body[data-view=focus] #content{display:block;margin-top:8px}body[data-view=focus] main>.hint{display:none}body[data-view=focus] .view-bar{justify-content:flex-start;gap:12px}body[data-view=focus] .view-note{margin-left:auto}body[data-view=focus] .focus-recommendations{background:transparent;border:0;padding:0 0 12px;margin:0}.lowest-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0 0}.lowest-eyebrow{font-size:11px;color:#8c7b62;letter-spacing:2px}.lowest-heading h2{font-size:22px!important;margin:7px 0!important;font-weight:600}.lowest-heading h2 span{font-weight:400;font-size:16px;color:#897c69}.lowest-scope{font-size:11px;color:#897c69;border:1px solid #dfd3bf;border-radius:20px;padding:6px 11px}.focus-recommendations>p{font-size:12px!important;margin:3px 0 24px!important}.focus-money-heading{display:flex;align-items:center;gap:8px;font-size:14px;margin:24px 0 12px}.focus-money-heading small{font-size:11px;font-weight:400;color:#9b8c77;margin-left:3px}.money-mark{width:25px;height:25px;display:grid;place-items:center;border-radius:50%;background:#ebe0c9;color:#8c6a34;font-size:11px;font-weight:400}.focus-best-grid{grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:12px}.focus-best{position:relative;display:flex;flex-direction:column;min-height:172px;padding:17px 18px 13px;background:#fffcf6;border:1px solid #e3dacb;border-radius:11px;overflow:hidden}.focus-best.has-match{background:linear-gradient(135deg,#fffcf6 50%,#f2f5ec);border-color:#cdd9c7;box-shadow:0 2px 5px #3a4b3010}.focus-best.has-match:before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:#7f9872}.focus-best-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:18px}.focus-best h4{margin:0;font-size:14px;line-height:1.6;overflow-wrap:anywhere}.lowest-badge{flex:none;font-size:10px;line-height:1.8;color:#a0917d}.has-match .lowest-badge{color:#647d55;background:#e7eedd;padding:1px 6px;border-radius:4px}.focus-best-price{font-size:29px;letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.1;color:#3e5847;margin:0 0 14px}.focus-best-price small{font-size:11px;letter-spacing:0;margin-left:6px;color:#8c7b62}.focus-best-owner{font-size:12px;color:#675c4b}.focus-best-note{display:flex;gap:3px;align-items:center;border-top:1px solid #e5e8de;padding-top:10px;margin-top:auto;font-size:11px;color:#748466}.focus-best-owner+.focus-best-note,.focus-best-ties+.focus-best-note{margin-top:13px}.focus-best-note>span:last-child{margin-left:auto;color:#9b8c77}.focus-best-empty{font-size:11px;color:#a3927b;padding:0;line-height:1.8}.lowest-dash{display:block;font-size:26px;color:#c6bcac;margin-bottom:9px;line-height:1}.lowest-footnote{font-size:11px;color:#9b8c77;padding:20px 0 0;line-height:1.8}@media(max-width:650px){.focus-best-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}.lowest-heading h2{font-size:19px!important}.lowest-heading h2 span{font-size:14px}.lowest-scope{display:none}body[data-view=focus] .view-note{display:none}}
+
+.main-settings #main-options,.main-settings #kind-options{display:block}.picker-section{margin:0 0 14px}.picker-section:last-child{margin-bottom:0}.picker-section-heading{font-size:12px;font-weight:600;color:#75664f;margin:0 0 7px;padding:7px 0;border-bottom:1px solid #e7dece}.picker-section-heading small{margin-left:8px;color:#a09380;font-weight:400}.picker-section-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}#kind-options .picker-section-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#kind-options .picker-section-grid label{margin:0}@media(max-width:650px){.picker-section-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#kind-options .picker-section-grid{grid-template-columns:1fr}}
+
+.main-settings .picker-section-heading{display:flex;align-items:center;gap:7px;width:100%;text-align:left;padding:9px 8px;margin:0 0 6px;border:0;border-bottom:1px solid #e7dece;border-radius:5px 5px 0 0;background:#f2ede3;cursor:pointer;font-size:12px;font-weight:600;color:#75664f}.main-settings .picker-section-heading:hover{background:#eae4d7}.picker-section-heading small{margin-left:auto;font-weight:400}.picker-section-arrow{width:12px;flex:none;color:#9b8c77}.picker-section-grid[hidden]{display:none!important}.main-settings .picker-section-heading[aria-expanded=false]{margin-bottom:0;border-bottom-color:transparent;border-radius:5px}
+</style><body class="workspace-document shop-document"><header class="workspace-header"><div><h1>神秘商店</h1><div class="sub">每周三、周六开放 · 默认仅展示有效商品。</div></div><div class="workspace-actions"><button id="refresh-records">刷新</button><select id="window" aria-label="游戏窗口"><option value="">未检测到游戏窗口</option></select>  <button id="read">读取所选</button><button id="all" class="primary">读取全部</button></div></header>
+<main><div class="toolbar workspace-filters"><select id="record-scope" aria-label="记录有效期"><option value="current">当前有效记录</option><option value="expired">过期记录</option></select><input id="search" placeholder="搜索商品名称"><select id="source"><option value="all">全部商店</option><option value="own" selected>自己的商店</option><option value="shared">好友分享</option></select><select id="flowers"><option value="all">全部羁绊</option><option value="0">不限羁绊</option><option value="1">1 花</option><option value="2">2 花</option><option value="3">3 花</option></select><select id="currency"><option value="all">全部币种</option><option value="900002">勾玉</option><option value="900001">金币</option><option value="900000">魂玉</option></select><select id="focus"><option value="all">全部重点类别</option><option value="black-shard">黑碎</option><option value="black-egg">黑蛋</option><option value="blue-ticket">蓝票</option><option value="demon-soul">逢魔之魂</option><option value="reverse-scale">大蛇的逆鳞</option><option value="taiko">太鼓结界卡</option></select><label><input id="important" type="checkbox" style="width:auto"> 仅看重点</label><label><input id="special" type="checkbox" style="width:auto"> 仅特惠</label><label><input id="available" type="checkbox" style="width:auto"> 仅可购买</label><button id="open-main-settings">大号设置 <span id="main-count"></span></button></div><dialog id="main-dialog" class="main-settings" aria-labelledby="main-dialog-title" aria-describedby="main-dialog-description">
+<header class="main-dialog-head"><div><h2 id="main-dialog-title">大号与羁绊</h2><p id="main-dialog-description">设置接收分享的大号，读取一次羁绊后，各小号商店共用。</p></div><button id="close-main-settings" class="icon-close" aria-label="关闭大号设置">×</button></header>
+<div class="main-dialog-body"><div class="main-section-title"><h3>已保存的大号</h3><span>登录对应大号后读取</span></div><div id="main-readers" class="main-readers"></div><div class="main-section-title"><h3>选择大号</h3><span id="main-selection-count"></span></div><input id="main-search" placeholder="搜索角色或区服" aria-label="搜索大号"><div id="main-options"></div></div>
+<footer class="main-dialog-footer"><div class="main-dialog-feedback"><p>羁绊仅用于判断分享条件。</p><p id="bond-status" role="status" aria-live="polite"></p></div><div class="main-dialog-buttons"><button id="cancel-main-settings">取消</button><button id="save-mains" class="primary">保存设置</button></div></footer></dialog><div class="view-bar"><div class="view-switch workspace-view-switch" role="group" aria-label="商店视图"><button data-shop-view="focus" aria-pressed="true">◇ 重点汇总</button><button data-shop-view="cards" aria-pressed="false">▦ 卡片总览</button><button data-shop-view="list" aria-pressed="false">☷ 紧凑列表</button></div><label class="focus-main-control" id="focus-main-control" hidden>当前大号<select id="focus-main" aria-label="当前大号"></select></label><button id="focus-kind-control" hidden>显示种类 <span id="focus-kind-count"></span></button><span class="view-note" id="view-note"></span></div><dialog id="kind-dialog" class="main-settings" aria-labelledby="kind-dialog-title"><header class="main-dialog-head"><div><h2 id="kind-dialog-title">重点页显示种类</h2><p>根据已读取的商品自动识别规格与币种，勾选即保存。</p></div><button class="icon-close" id="close-kind-dialog" aria-label="关闭种类设置">×</button></header><div class="main-dialog-body"><div class="kind-tools"><input id="kind-search" placeholder="搜索物品名称" aria-label="搜索种类"><button id="kind-all">全选</button><button id="kind-none">全不选</button><button id="kind-default">恢复重点种类</button></div><div id="kind-options"></div></div><footer class="main-dialog-footer"><span class="main-dialog-feedback" id="kind-summary"></span><button id="kind-done" class="primary">完成</button></footer></dialog><div class="status workspace-status" id="status" role="status">读取游戏已加载的商店数据</div><details id="errors" hidden><summary></summary><div></div></details><div id="content"></div><div class="hint">重点道具优先排列：黑碎、黑蛋、蓝票、逢魔之魂、大蛇的逆鳞、太鼓结界卡。太鼓保留原有星级。<br>花朵表示商品要求的羁绊等级；可购买状态按本次游戏读取结果显示，不代表货币余额充足。<br>保留各角色上次成功读取的数据；打开游戏商店后可更新。过期记录与当前有效商品分开查看，读取失败不延长旧记录有效期。此页面仅查看，不执行购买。</div></main>
 <script>
-let state={roles:{}}, busy=false,shopView='cards';
+let state={roles:{}}, busy=false,shopView='focus';
 try{const saved=localStorage.getItem('mystery-shop-view');if(['cards','list','focus'].includes(saved))shopView=saved}catch{}
 const $=id=>document.getElementById(id),escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function isCurrent(data){return Number.isFinite(data.expires_at)&&data.expires_at>Date.now()/1000}
+function scheduleLabel(){const day=new Date(Date.now()+8*3600000).getUTCDay();return [3,6].includes(day)?'今天是开放日':'今天非开放日（周三、周六开放）'}
 const currency=id=>({900002:'勾玉',900001:'金币',900000:'魂玉'}[id]||'其他货币');
 const priorities=[['black-shard','黑碎'],['black-egg','黑蛋'],['blue-ticket','蓝票'],['demon-soul','逢魔之魂'],['reverse-scale','大蛇的逆鳞'],['taiko','太鼓结界卡']];
 function importantType(g){const name=String(g.name||'').replace(/（/g,'(').replace(/）/g,')');const id=Number(g.product);if(id===434111||name==='御行达摩(碎片)')return 'black-shard';if(name==='御行达摩')return 'black-egg';if(id===490001||name==='神秘的符咒')return 'blue-ticket';if(id===900218||name==='逢魔之魂')return 'demon-soul';if(id===900217||name==='大蛇的逆鳞')return 'reverse-scale';if(/^[一二三四五六1-6]星太鼓$/.test(name)||name==='太鼓')return 'taiko';return '';}
 const priorityRank=g=>{const i=priorities.findIndex(p=>p[0]===importantType(g));return i<0?99:i};
 const priorityLabel=g=>priorities.find(p=>p[0]===importantType(g))?.[1]||'';
+let draftMains=null;
+const pickerCollapseCache={},pickerSearchCollapse={};
+function pickerCollapseSet(scope,query){
+ if(query){if(pickerSearchCollapse[scope]?.query!==query)pickerSearchCollapse[scope]={query,collapsed:new Set()};return pickerSearchCollapse[scope].collapsed}
+ delete pickerSearchCollapse[scope];
+ if(!pickerCollapseCache[scope]){let saved=[];try{const value=JSON.parse(localStorage.getItem('mystery-shop-picker-collapsed-'+scope)||'[]');if(Array.isArray(value))saved=value.filter(x=>typeof x==='string')}catch{}pickerCollapseCache[scope]=new Set(saved)}
+ return pickerCollapseCache[scope];
+}
+function pickerSection(scope,key,title,members,suffix,query){
+ const collapsed=pickerCollapseSet(scope,query),section=document.createElement('section'),heading=document.createElement('button'),arrow=document.createElement('span'),name=document.createElement('span'),count=document.createElement('small'),grid=document.createElement('div');
+ section.className='picker-section';section.dataset.pickerGroup=key;heading.type='button';heading.className='picker-section-heading';arrow.className='picker-section-arrow';arrow.setAttribute('aria-hidden','true');name.textContent=title;count.textContent=members.length+' '+suffix;heading.append(arrow,name,count);grid.className='picker-section-grid';grid.append(...members);
+ const sync=()=>{const open=!collapsed.has(key);heading.setAttribute('aria-expanded',String(open));heading.setAttribute('aria-label',(open?'收起':'展开')+' '+title);arrow.textContent=open?'▾':'▸';grid.hidden=!open};
+ heading.onclick=()=>{collapsed.has(key)?collapsed.delete(key):collapsed.add(key);if(!query)try{localStorage.setItem('mystery-shop-picker-collapsed-'+scope,JSON.stringify([...collapsed]))}catch{}sync()};sync();section.append(heading,grid);return section;
+}
+function renderMainOptions(){
+ const targets=state.main_targets||[];const selected=draftMains||new Set(targets.map(x=>x.key));
+ $('main-count').textContent=targets.length?'· '+targets.length+' 个':'';
+ $('main-selection-count').textContent='已选 '+selected.size+' 个';
+ for(const id of ['close-main-settings','cancel-main-settings','save-mains','main-search'])$(id).disabled=busy;
+ $('main-readers').replaceChildren(...targets.map(main=>{
+  const row=document.createElement('div'),info=document.createElement('div'),button=document.createElement('button');row.className='main-reader';info.className='main-reader-info';
+  const cached=state.main_bonds?.[main.key];
+  const name=document.createElement('div'),server=document.createElement('small'),time=document.createElement('div');name.className='main-reader-name';name.textContent=main.name;server.textContent=main.server;name.append(server);time.className='main-reader-time';
+  time.textContent=(cached?.at?'更新于 '+new Date(cached.at*1000).toLocaleString('zh-CN',{hour12:false}):'尚未读取羁绊')+(cached?.error?' · 上次读取失败，旧记录已保留':'');info.append(name,time);
+  button.textContent='读取羁绊';button.disabled=busy;
+  button.onclick=async()=>{if(busy)return;busy=true;$('bond-status').textContent='正在读取 '+main.name+' 的羁绊…';renderMainOptions();try{state=await pywebview.api.read_bonds(main.key);$('bond-status').textContent=main.name+'：羁绊已更新'}catch(e){$('bond-status').textContent=e.message||String(e);try{state=await pywebview.api.load()}catch{}}finally{busy=false;render()}};
+  row.append(info,button);return row;
+ }));
+ if(!targets.length)$('main-readers').innerHTML='<div class="main-readers-empty">先在下方选择大号并保存，再读取羁绊。</div>';
+
+ const query=$('main-search').value.trim();
+ $('main-options').replaceChildren(...(state.main_candidates||[]).filter(row=>!query||(row.name+' '+row.server).includes(query)).map(row=>{
+  const label=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=row.key;input.checked=selected.has(row.key);input.disabled=busy;
+  input.onchange=()=>{if(!draftMains)draftMains=new Set(targets.map(x=>x.key));input.checked?draftMains.add(row.key):draftMains.delete(row.key);$('main-selection-count').textContent='已选 '+draftMains.size+' 个'};
+  const info=document.createElement('span'),name=document.createElement('strong'),server=document.createElement('small');info.className='main-candidate-info';name.textContent=row.name;server.textContent=row.server;info.append(name,server);label.append(input,info);return label;
+ }));
+ const labels=[...$('main-options').children],candidates=state.main_candidates||[];
+ const groupNames=[...new Set([...(state.main_groups||['未分组']),...candidates.map(row=>row.group||'未分组')])];
+ const sections=[];
+ for(const name of groupNames){const members=labels.filter(label=>(candidates.find(row=>row.key===label.querySelector('input').value)?.group||'未分组')===name);if(!members.length)continue;
+  sections.push(pickerSection('mains',name,name,members,'个',query));
+ }
+ $('main-options').replaceChildren(...sections);
+ if(!$('main-options').children.length)$('main-options').textContent='暂无匹配角色；可先在角色管理中确认大号身份，或读取其所在的好友列表。';
+}
+function shareHint(g,data,shop){
+ if(!shop.own||!(state.main_targets||[]).length)return '';
+ if(!isCurrent(data))return '<div class="share-match">已过期，不判断分享条件</div>';
+ const own=String(data.role.server_id)+':'+String(data.role.short_id);
+ const yes=[],no=[],unknown=[];
+ for(const main of state.main_targets){
+  if(main.key===own)continue;
+  const cached=state.main_bonds?.[main.key]?.bonds;
+  const bond=cached?.[own]||(data.role.uid?cached?.['uid:'+data.role.uid]:null);
+  if(!bond||!Number.isInteger(bond.level)||!Number.isInteger(g.flowers)){unknown.push(main.name);continue}
+  (bond.level>=g.flowers?yes:no).push(main.name+'（'+bond.level+' 花）');
+ }
+ return '<div class="share-match">'+[yes.length?'羁绊允许分享给：'+yes.map(escape).join('、'):'',no.length?'羁绊不足：'+no.map(escape).join('、'):'',unknown.length?'羁绊待确认：'+unknown.map(escape).join('、'):''].filter(Boolean).join('<br>')+'</div>';
+}
 function goodCard(g,data,shop,withContext=false){
- const expired=Date.now()/1000>=data.expires_at;
+ const expired=!isCurrent(data);
  return `<article class="good ${escape(g.status)} ${importantType(g)?'important':''}">
  ${withContext?`<div class="item-context">${escape(data.role.name)} <small>· ${escape(data.role.server)} · ${shop.own?'自有商店':'好友分享 '+shop.index} · Lv.${escape(shop.level??'—')}</small><small>${expired?'已过期':`有效至 ${new Date(data.expires_at*1000).toLocaleTimeString('zh-CN',{hour12:false})}`}</small></div>`:''}
  <div class="flower" title="${escape(({1:'友谊的见证',2:'温暖的陪伴',3:'永远的羁绊'})[g.flowers]||'不限羁绊')}">${'❀'.repeat(Math.min(3,Math.max(0,g.flowers)))}<small>${g.flowers?g.flowers+' 花':'不限羁绊'}</small></div>
  <div class="name">${escape(g.name)}</div><div class="qty">${importantType(g)?`<span class="priority-tag">◆ ${escape(priorityLabel(g))}</span>`:''}每份 × ${escape(g.quantity)}</div>
  <div class="price">${g.costs.map(c=>`${Number(c.amount).toLocaleString()}<small>${currency(c.currency)}</small>`).join(' + ')}</div>
- <div class="bottom"><span class="availability">${expired?'记录已过期':g.status==='sold'?'已售罄':g.status==='locked'?'羁绊不足':g.status==='available'?'剩余 '+(g.remaining??'—')+' 次':'状态待确认'}</span><span>${g.special?'<span class="tag">特惠</span> ':''}${g.rate===1?'':escape(Math.round(g.rate*100))+'% 原价'}</span></div></article>`;
+ <div class="bottom"><span class="availability">${expired?'记录已过期':g.status==='sold'?'已售罄':g.status==='locked'?'羁绊不足':g.status==='available'?'剩余 '+(g.remaining??'—')+' 次':'状态待确认'}</span><span>${g.special?'<span class="tag">特惠</span> ':''}${g.rate===1?'':escape(Math.round(g.rate*100))+'% 原价'}</span></div>${shareHint(g,data,shop)}</article>`;
 }
 function matchesGood(g,data){return (!$('search').value||g.name.includes($('search').value))&&($('flowers').value==='all'||String(g.flowers)===$('flowers').value)&&($('currency').value==='all'||g.costs.some(c=>String(c.currency)===$('currency').value))&&(!$('important').checked||importantType(g))&&($('focus').value==='all'||importantType(g)===$('focus').value)&&(!$('special').checked||g.special)&&(!$('available').checked||(g.status==='available'&&Date.now()/1000<data.expires_at))}
+
+let focusSpecs=[],kindCatalog=new Map(),kindSelection=null;
+try{const cached=JSON.parse(localStorage.getItem('mystery-shop-kind-catalog')||'[]');for(const spec of cached)if(spec&&typeof spec.key==='string'&&typeof spec.label==='string')kindCatalog.set(spec.key,spec);const selected=JSON.parse(localStorage.getItem('mystery-shop-kind-selection')||'null');if(Array.isArray(selected))kindSelection=new Set(selected)}catch{}
+function detectedSpec(g){
+ const cost=focusCost(g);if(!cost||!g.name||!Number.isFinite(Number(g.quantity))||Number(g.quantity)<=0)return null;
+ const type=importantType(g),money=Number(cost.currency),quantity=Number(g.quantity),name=String(g.name),product=String(g.product||name);
+ if(type==='black-shard'&&quantity===1&&money===900002){
+  const cell=String(g.key||''),original=Number(cost.original);
+  const tier=cell==='205'?50:cell==='206'?60:original===50||original===60?original:null;
+  if(tier)return {key:'pending-shard-one-'+money+'-'+(tier===50?'a':'b'),label:'黑碎 ×1 · 原价 '+tier+' 勾玉',type,quantity,money,tier};
+  return {key:JSON.stringify([product,name,quantity,money,'unverified',cell]),label:'黑碎 ×1 · 档位待确认',type,quantity,money,pending:true};
+ }
+ const key=JSON.stringify([product,name,quantity,money]);
+ return {key,label:/^[一二三四五六1-6]星太鼓$/.test(name)?name:name+' ×'+quantity,type,quantity,money};
+}
+function kindTypeOrder(spec){if(spec.type){const index=priorities.findIndex(x=>x[0]===spec.type);if(index>=0)return index}const name=spec.label;if(/达摩/.test(name))return 10;if(/手札/.test(name))return 11;if(/碎片|碎片宝盒/.test(name))return 12;if(/符咒|门票/.test(name))return 13;if(/太阴|斗鱼|结界卡/.test(name))return 14;return 99}
+function focusStarRank(spec){const m=spec.label.match(/^([一二三四五六1-6])星太鼓/);return m?('一二三四五六'.indexOf(m[1])+1||Number(m[1])):0}
+function refreshKindCatalog(){
+ for(const [key,spec] of kindCatalog)if(/^pending-shard-one-900002-[ab]$/.test(key)){
+  const tier=key.endsWith('-a')?50:60;kindCatalog.set(key,{...spec,label:'黑碎 ×1 · 原价 '+tier+' 勾玉',pending:false,tier});
+ }
+ for(const data of Object.values(state.roles||{}))for(const shop of data.shops||[])for(const g of shop.goods||[]){const spec=detectedSpec(g);if(spec)kindCatalog.set(spec.key,spec)}
+ focusSpecs=[...kindCatalog.values()].sort((a,b)=>(a.money===900002?0:a.money===900001?1:2)-(b.money===900002?0:b.money===900001?1:2)||a.money-b.money||kindTypeOrder(a)-kindTypeOrder(b)||(a.type===b.type&&a.type?a.quantity-b.quantity:0)||(a.tier||0)-(b.tier||0)||focusStarRank(a)-focusStarRank(b)||a.label.localeCompare(b.label,'zh-CN'));
+ try{localStorage.setItem('mystery-shop-kind-catalog',JSON.stringify(focusSpecs))}catch{}
+}
+function kindSelected(spec){return kindSelection?kindSelection.has(spec.key):!!spec.type}
+function saveKindSelection(){try{localStorage.setItem('mystery-shop-kind-selection',JSON.stringify([...kindSelection]))}catch{}}
+function renderKindOptions(){
+ const query=$('kind-search').value.trim();$('kind-options').replaceChildren(...focusSpecs.filter(spec=>!query||spec.label.includes(query)).map(spec=>{
+  const label=document.createElement('label'),input=document.createElement('input'),info=document.createElement('span'),name=document.createElement('span'),money=document.createElement('small');input.type='checkbox';input.checked=kindSelected(spec);input.value=spec.key;name.textContent=spec.label;money.textContent=currency(spec.money)+'购买'+(spec.pending?' · 类型待核对':'');info.append(name,money);label.append(input,info);
+  input.onchange=()=>{if(!kindSelection)kindSelection=new Set(focusSpecs.filter(kindSelected).map(x=>x.key));input.checked?kindSelection.add(spec.key):kindSelection.delete(spec.key);saveKindSelection();render()};return label;
+ }));
+ const labels=[...$('kind-options').children],sections=[];
+ for(const money of [...new Set(focusSpecs.map(spec=>spec.money))]){const members=labels.filter(label=>focusSpecs.find(spec=>spec.key===label.querySelector('input').value)?.money===money);if(!members.length)continue;
+  sections.push(pickerSection('kinds',String(money),currency(money)+'购买',members,'类',query));
+ }
+ $('kind-options').replaceChildren(...sections);
+ const selected=focusSpecs.filter(kindSelected).length;$('focus-kind-count').textContent='· '+selected;$('kind-summary').textContent='已选 '+selected+' / '+focusSpecs.length+' 类';
+ if(!focusSpecs.length)$('kind-options').textContent='读取商店后会自动列出物品种类。';else if(!$('kind-options').children.length)$('kind-options').textContent='没有匹配的种类';
+ $('focus-kind-control').hidden=shopView!=='focus';
+}
+let focusMainKey='';try{focusMainKey=localStorage.getItem('mystery-shop-focus-main')||''}catch{}
+function syncFocusMain(){
+ const targets=state.main_targets||[];
+ if(!targets.some(main=>main.key===focusMainKey))focusMainKey=targets[0]?.key||'';
+ $('focus-main-control').hidden=shopView!=='focus';
+ $('focus-main').replaceChildren(...(targets.length?targets.map(main=>new Option(main.name+' · '+main.server,main.key)):[new Option('请先设置大号','')]));
+ $('focus-main').value=focusMainKey;
+}
+function focusCost(g){const costs=g.costs||[];return costs.length===1&&Number.isFinite(Number(costs[0].amount))&&Number(costs[0].amount)>0?costs[0]:null}
+function specMatches(spec,g){return detectedSpec(g)?.key===spec.key}
+function canShareToMain(row){
+ const {g,data,shop}=row;
+ if(!focusMainKey||!shop.own||!isCurrent(data)||g.status!=='available'||(g.remaining!=null&&Number(g.remaining)<=0))return false;
+ const own=String(data.role.server_id)+':'+String(data.role.short_id);if(own===focusMainKey)return false;
+ const bonds=state.main_bonds?.[focusMainKey]?.bonds;
+ const bond=bonds?.[own]||(data.role.uid?bonds?.['uid:'+data.role.uid]:null);
+ return !!bond&&Number.isInteger(bond.level)&&Number.isInteger(g.flowers)&&bond.level>=g.flowers;
+}
+function focusRecommendations(rows){
+ const main=(state.main_targets||[]).find(x=>x.key===focusMainKey);
+ let html='<section class="focus-recommendations"><div class="lowest-heading"><div><span class="lowest-eyebrow">重点汇总</span><h2>'+(main?escape(main.name)+' <span>的小号最低价</span>':'小号最低价')+'</h2></div><span class="lowest-scope">同币种 · 同规格</span></div><p>'+(main?'仅匹配有效、可购买且羁绊达标的小号商品。':'先在“大号设置”中选择大号并读取羁绊。')+'</p>';
+ const selectedSpecs=focusSpecs.filter(kindSelected);
+ if(!selectedSpecs.length)html+='<p class="focus-kind-empty">尚未选择显示种类，点击“显示种类”进行设置。</p>';
+ for(const money of [...new Set(selectedSpecs.map(spec=>spec.money))]){
+  html+='<h3 class="focus-money-heading"><span class="money-mark">'+(money===900002?'勾':money===900001?'金':'币')+'</span>'+currency(money)+'购买<small>'+selectedSpecs.filter(x=>x.money===money).length+' 类</small></h3><div class="focus-best-grid">';
+  for(const spec of selectedSpecs.filter(x=>x.money===money)){
+   const matches=spec.pending?[]:rows.filter(row=>specMatches(spec,row.g)&&canShareToMain(row)).sort((a,b)=>Number(focusCost(a.g).amount)-Number(focusCost(b.g).amount));
+   const best=matches[0];
+   html+='<article class="focus-best '+(best?'has-match':'')+'" data-spec="'+escape(spec.key)+'"><div class="focus-best-top"><h4>'+escape(spec.label)+'</h4><span class="lowest-badge">'+(best?'最低价':spec.pending?'待核对':'暂无推荐')+'</span></div>';
+   if(best){const amount=Number(focusCost(best.g).amount),ties=matches.filter(row=>Number(focusCost(row.g).amount)===amount);const owners=[...new Set(ties.map(row=>row.data.role.name+' · '+row.data.role.server))];
+    html+='<div class="focus-best-price">'+amount.toLocaleString()+'<small>'+currency(money)+'</small></div><div class="focus-best-owner">'+escape(owners[0])+'</div>'+(owners.length>1?'<div class="focus-best-ties">同价：'+owners.slice(1).map(escape).join('、')+'</div>':'')+'<div class="focus-best-note"><span class="lowest-check">✓</span> 羁绊达标<span>'+matches.length+' 条可选</span></div>';
+   }else html+='<div class="focus-best-empty"><span class="lowest-dash">—</span>'+(spec.pending?'类型待核对':!main?'尚未选择大号':$('record-scope').value==='expired'?'过期记录不参与推荐':'暂无符合条件的小号商品')+'</div>';
+   html+='</article>';
+  }
+  html+='</div>';
+ }
+ return html+'<div class="lowest-footnote">余额与分享次数请在游戏中确认；过期记录不参与推荐。</div></section>';
+}
 function render(){
+ renderMainOptions();
+ refreshKindCatalog();
+ renderKindOptions();
+ syncFocusMain();
  document.body.dataset.view=shopView;
  document.querySelectorAll('[data-shop-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.shopView===shopView)));
- $('view-note').textContent={cards:'按角色和店铺浏览，适合查看完整商品。',list:'压缩为逐行清单，一屏浏览更多商品。',focus:'跨角色归集六类重点道具，保留店铺来源、星级和羁绊要求。'}[shopView];
- let html='',count=0;const buckets=new Map(priorities.map(([key,label])=>[key,{label,cards:[]}]));
+ $('view-note').textContent={cards:'按角色和店铺浏览，适合查看完整商品。',list:'压缩为逐行清单，一屏浏览更多商品。',focus:'按当前大号匹配小号，按币种与规格比较最低价。'}[shopView];
+ let html='',count=0;const focusRows=[];
  for(const data of Object.values(state.roles||{})){
+  if(($('record-scope').value==='current')!==isCurrent(data))continue;
   let blocks='';
   for(const shop of data.shops||[]){
    if($('source').value==='own'&&!shop.own||$('source').value==='shared'&&shop.own)continue;
-   const goods=shop.goods.filter(g=>matchesGood(g,data)&&(shopView!=='focus'||importantType(g))).sort((a,b)=>priorityRank(a)-priorityRank(b));
+   const goods=shop.goods.filter(g=>matchesGood(g,data)&&(shopView!=='focus'||focusSpecs.some(spec=>kindSelected(spec)&&specMatches(spec,g)))).sort((a,b)=>priorityRank(a)-priorityRank(b));
    if(!goods.length)continue;count+=goods.length;
-   if(shopView==='focus'){for(const g of goods)buckets.get(importantType(g)).cards.push(goodCard(g,data,shop,true));continue}
+   if(shopView==='focus'){for(const g of goods)focusRows.push({g,data,shop});continue}
    blocks+=`<section class="shop"><div class="shop-head"><strong>${shop.own?'自己的商店':'好友分享 '+shop.index}</strong><small>商人 Lv.${escape(shop.level??'—')} · ${goods.length} 件商品</small></div><div class="goods">${goods.map(g=>goodCard(g,data,shop)).join('')}</div></section>`;
   }
-  if(blocks){const expired=Date.now()/1000>=data.expires_at;html+=`<div class="role"><h2>${escape(data.role.name)} <span>· ${escape(data.role.server)}</span></h2><span>${expired?'有效期已结束':`有效至 ${new Date(data.expires_at*1000).toLocaleString('zh-CN',{hour12:false})}`} · ${new Date(data.captured_at*1000).toLocaleTimeString('zh-CN',{hour12:false})} 读取</span></div>`+blocks}
+  if(blocks){const expired=!isCurrent(data);html+=`<div class="role"><h2>${escape(data.role.name)} <span>· ${escape(data.role.server)}</span></h2><span>${expired?'有效期已结束':`有效至 ${new Date(data.expires_at*1000).toLocaleString('zh-CN',{hour12:false})}`} · ${new Date(data.captured_at*1000).toLocaleTimeString('zh-CN',{hour12:false})} 读取</span></div>`+blocks}
  }
- if(shopView==='focus')for(const [key,bucket] of buckets){if(bucket.cards.length)html+=`<section class="shop focus-group" data-group="${key}"><div class="shop-head"><span class="group-dot"></span><strong>${escape(bucket.label)}</strong><small>${bucket.cards.length} 条商品记录</small></div><div class="goods">${bucket.cards.join('')}</div></section>`}
- $('content').innerHTML=html||'<div class="empty">'+(Object.keys(state.roles||{}).length?(shopView==='focus'?'当前筛选下没有六类重点道具，可切换卡片总览查看全部商品。':'没有符合筛选的商品'):'打开游戏中的神秘商店，再点击右上角读取按钮')+'</div>';
- if(!busy)$('status').textContent=`${Object.keys(state.roles||{}).length} 个角色存档 · 当前显示 ${count} 件商品`;
+ if(shopView==='focus')html=focusRecommendations(focusRows);
+ $('content').innerHTML=html||'<div class="empty">'+(Object.keys(state.roles||{}).length?(shopView==='focus'?($('record-scope').value==='current'?'当前没有符合筛选的有效重点商品，旧数据请切换过期记录查看。':'过期记录中没有符合筛选的重点商品。'):($('record-scope').value==='current'?'暂无符合筛选的有效商品；旧记录可切换至过期记录查看。':'暂无符合筛选的过期商品')):'打开游戏中的神秘商店，再点击右上角读取按钮')+'</div>';
+ if(!busy){const records=Object.values(state.roles||{}),valid=records.filter(isCurrent).length;$('status').textContent=scheduleLabel()+` · 有效 ${valid} 个角色 · 过期 ${records.length-valid} 个角色 · ${$('record-scope').value==='current'?'当前有效':'过期记录'} ${count} 件商品`;}
  const errors=state.errors||[];$('errors').hidden=!errors.length;$('errors').querySelector('summary').textContent=errors.length+' 个窗口未更新，展开查看';$('errors').querySelector('div').innerHTML=errors.map(e=>`<p>${escape(e.window)}：${escape(e.message)}</p>`).join('');
 }
 document.querySelectorAll('[data-shop-view]').forEach(button=>button.onclick=()=>{shopView=button.dataset.shopView;try{localStorage.setItem('mystery-shop-view',shopView)}catch{}render()});
 
-for(const id of ['search','source','flowers','currency','focus','important','special','available'])$(id).addEventListener('input',render);
+for(const id of ['record-scope','search','source','flowers','currency','focus','important','special','available'])$(id).addEventListener('input',render);
 $('refresh-records').onclick=async()=>{if(busy)return;try{state=await pywebview.api.load();render()}catch(e){$('status').textContent=e.message}};
-$('window').addEventListener('change',()=>{$('read').textContent=$('window').value==='all'?'读取全部窗口':'读取所选窗口'});
-$('read').onclick=async()=>{busy=true;let failure='';$('read').disabled=true;$('refresh-records').disabled=true;$('read').textContent='正在读取…';$('refresh').disabled=true;$('window').disabled=true;$('status').textContent='正在逐个读取窗口，请稍候…';try{state=await pywebview.api.read($('window').value)}catch(e){failure=String(e.message||e)}finally{busy=false;$('read').disabled=false;$('refresh-records').disabled=false;$('read').textContent=$('window').value==='all'?'读取全部窗口':'读取所选窗口';$('refresh').disabled=false;$('window').disabled=false;render();if(!failure)$('status').textContent+=' · 本次成功 '+(state.successes||0)+' 个窗口，失败 '+(state.errors||[]).length+' 个窗口';if(failure)$('status').textContent=failure}};
-async function refreshWindows(){const previous=$('window').value;const rows=await pywebview.api.windows();$('window').replaceChildren(new Option('所有运行窗口','all'));for(const w of rows){const option=new Option(w.title||'游戏窗口',w.id);$('window').append(option)}if(rows.some(w=>w.id===previous))$('window').value=previous;}
-$('refresh').onclick=async()=>{if(busy)return;try{await refreshWindows()}catch(e){$('status').textContent=e.message||String(e)}};
+async function readShop(target){if(busy)return;if(!target){$('status').textContent='请先选择游戏窗口';return}busy=true;let failure='';for(const id of ['read','all','refresh-records','window'])$(id).disabled=true;$('all').textContent='正在读取…';$('status').textContent='正在读取，请稍候…';try{state=await pywebview.api.read(target)}catch(e){failure=String(e.message||e)}finally{busy=false;for(const id of ['read','all','refresh-records','window'])$(id).disabled=false;$('all').textContent='读取全部';render();if(!failure)$('status').textContent+=' · 本次成功 '+(state.successes||0)+' 个窗口，失败 '+(state.errors||[]).length+' 个窗口';if(failure)$('status').textContent=failure}}
+$('focus-kind-control').onclick=()=>{renderKindOptions();$('kind-dialog').showModal()};
+for(const id of ['close-kind-dialog','kind-done'])$(id).onclick=()=>$('kind-dialog').close();
+$('kind-search').oninput=renderKindOptions;
+$('kind-all').onclick=()=>{kindSelection=new Set(focusSpecs.map(x=>x.key));saveKindSelection();render()};
+$('kind-none').onclick=()=>{kindSelection=new Set();saveKindSelection();render()};
+$('kind-default').onclick=()=>{kindSelection=new Set(focusSpecs.filter(x=>x.type).map(x=>x.key));saveKindSelection();render()};
+$('focus-main').onchange=()=>{focusMainKey=$('focus-main').value;try{localStorage.setItem('mystery-shop-focus-main',focusMainKey)}catch{}render()};
+$('read').onclick=()=>readShop($('window').value);$('all').onclick=()=>readShop('all');
+async function refreshWindows(){const previous=$('window').value;const rows=await pywebview.api.windows();$('window').replaceChildren(...rows.map(w=>new Option(w.title||'游戏窗口',w.id)));if(!rows.length)$('window').append(new Option('未检测到游戏窗口',''));if(rows.some(w=>w.id===previous))$('window').value=previous;}
+$('refresh-records').onclick=async()=>{if(busy)return;try{await refreshWindows();state=await pywebview.api.load();render()}catch(e){$('status').textContent=e.message||String(e)}};
+$('open-main-settings').onclick=()=>{draftMains=null;$('bond-status').textContent='';$('main-search').value='';renderMainOptions();$('main-dialog').showModal()};
+$('close-main-settings').onclick=()=>{if(!busy)$('main-dialog').close()};
+$('cancel-main-settings').onclick=()=>{if(!busy)$('main-dialog').close()};
+$('main-dialog').addEventListener('close',()=>{draftMains=null;renderMainOptions()});
+$('main-dialog').addEventListener('cancel',event=>{if(busy)event.preventDefault()});
+$('main-search').oninput=renderMainOptions;
+$('save-mains').onclick=async()=>{if(busy)return;const keys=[...(draftMains||new Set((state.main_targets||[]).map(x=>x.key)))];busy=true;renderMainOptions();try{state=await pywebview.api.mains(keys);draftMains=null;$('bond-status').textContent='设置已保存'}catch(e){$('bond-status').textContent=e.message||String(e)}finally{busy=false;render()}};
 async function init(){try{state=await pywebview.api.load();render();await refreshWindows()}catch(e){$('status').textContent=e.message||String(e)}}
+setInterval(()=>{if(!busy)render()},30000);
 if(window.pywebview?.api)init();else window.addEventListener('pywebviewready',init,{once:true});render();
 </script></html>

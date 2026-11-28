@@ -752,3 +752,5 @@ html,body,#app{height:100%;min-height:0;overflow:hidden}
 .shell.compact-workbench{height:100dvh;min-height:0;overflow:hidden}
 .shell .main.blue-page>*{min-height:0;min-width:0}
 .role-scroll,.task-list,.overview-table,.shop-scroll,.dojo-scroll,.plan-list,.scheme-members,.groups{overscroll-behavior:contain}
+
+.plan-save-status{font-size:11px;font-weight:400;color:var(--muted);margin-left:8px;white-space:nowrap}.plan-save-error{font-size:12px;line-height:1.7;margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.plan-save-error button{font-size:12px;padding:4px 9px}
