@@ -1,5 +1,31 @@
 [
   {
+    "tag_name": "v9.58-experimental",
+    "prerelease": true,
+    "draft": false,
+    "body": "# v9.58 自动保存、分组排序与读取优化\n\n- 启动方案修改后自动保存，取消手动保存按钮及切换、退出时的保存询问。连续修改按顺序写入，切换和退出前完成保存；保存失败保留当前修改并显示原因。\n- 方案启动后显示“终止”按钮，可停止尚未提交的后续启动，已提交或已打开的游戏保留。\n- 重复打开启动器时直接唤起已有窗口，最小化时恢复，并保留原来的最大化状态。\n- 资源记录新增独立角色分组，支持新建、改名、折叠、角色拖动排序和跨组移动；日常清单的总览、每日及每周列表均支持角色与分组拖动排序。分组顺序及折叠状态保存在本地，没有自建分组时隐藏“未分组”标题。\n- 资源月历默认选中当前月份，只在日期格中展示蓝票、黑碎、黑蛋等关键收获。月历与当月收获改为高度独立的卡片，全部道具合并为紧凑列表，蓝票、黑碎、黑蛋优先展示，未获得的项目不占位。\n- 显示适配改为依据屏幕分辨率和 Windows 缩放推荐比例，并支持手动调整。拖动软件窗口大小不会再改变字号和缩放比例，修复缩放造成的界面错位；整理读取工具栏，恢复读取当前角色入口。\n- 神秘商店按周三、周六开放日处理，区分过期记录与当前商品。新增“大号与羁绊”设置，每个大号可单独读取羁绊，其他角色商店复用已有记录；重点汇总按当前大号、币种和商品规格推荐可分享小号的最低价。\n- 神秘商店商品种类可手动筛选，两个黑碎 ×1 规格分别识别；大号选择和启动方案添加角色按角色管理分组展示，选择页分组可折叠。\n- 悬赏重点汇总优先展示，协作与分享分开，其他悬赏默认收起，并改为更紧凑的奖励分栏布局。\n- 修复好友祈愿收满后记录消失被判为未发起的问题，优化日常读取速度；修复永生之海本周完成记录在隔天读取后变为未知的问题。首领退治在非开放日按开放规则展示。\n- 修正每日礼包需要手动领取才能完成，以及斗技荣誉进度、上限的读取与判断。\n\n## 下载与升级\n\n下载 Windows x64 ZIP，完整解压后运行“僵尸痒痒鼠.exe”。软件完全免费，无需激活码、会员或付费授权。\n\n升级前备份软件目录中的 data。可使用软件内更新，或关闭旧版后解压到新目录并复制原 data；普通游戏窗口可保持运行，使用软件代理的游戏请先关闭。发行包不包含账号缓存、个人记录或代理凭证。\n\n## 说明\n\n本版仍为实验版。任务和资源读取取决于客户端本次已加载的数据，未加载不代表未完成；读取失败保留已有记录，不自动执行战斗、交换、购买或领取。跨电脑实机游戏兼容性尚未完整验证，账号相关风险与使用边界见软件内使用须知。\n\n项目主页：https://yys.xiryy.com/\nGitHub：https://github.com/Xirrry/JiangshiYys/releases\n",
+    "assets": [
+      {
+        "name": "JiangshiYys-9.58-experimental-win-x64.zip",
+        "size": 33409657,
+        "digest": "sha256:314d185296634050339757e93408f69cb0b8c6376b553815bb624560560abba7",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.58-experimental/JiangshiYys-9.58-experimental-win-x64.zip"
+      },
+      {
+        "name": "release958-public-report.json",
+        "size": 788,
+        "digest": "sha256:3709a99096aa45016cd8957ffae0b2c5a5a0de88b845592f2f59e45d22b27433",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.58-experimental/release958-public-report.json"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 109,
+        "digest": "sha256:f7641ea143d0ad71c67036c4efeccd7dad20e13fcb9e30a1b6cc00a67efc548d",
+        "browser_download_url": "https://github.com/Xirrry/JiangshiYys/releases/download/v9.58-experimental/SHA256SUMS.txt"
+      }
+    ]
+  },
+  {
     "tag_name": "v9.57-experimental",
     "prerelease": true,
     "draft": false,
